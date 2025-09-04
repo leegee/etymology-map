@@ -3,7 +3,7 @@ import { createSignal } from "solid-js";
 import WordSearch from "~/components/WordSearch";
 import TranslationList from "~/components/TranslationList";
 import { Translation } from "~/types";
-import Map from "~/components/Map";
+import Map from "~/components/TranslationMap";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
