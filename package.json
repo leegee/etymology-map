@@ -7,8 +7,8 @@
     "test": "vitest run",
     "test-watch": "vitest",
     "test-ui": "vitest --ui",
-    "db": "node --loader ts-node/esm scripts/build-db.ts",
-    "db:see": "node --loader ts-node/esm scripts/see.ts"
+    "db:build": "bun tsx scripts/build-db.ts",
+    "db:see": "bun tsx scripts/see.ts"
   },
   "type": "module",
   "devDependencies": {
@@ -26,6 +26,7 @@
     "solid-js": "^1.9.3",
     "sql.js": "^1.13.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vinxi": "^0.5.7",
     "vite": "^6.0.0",
