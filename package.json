@@ -19,6 +19,7 @@
     "@testing-library/jest-dom": "^6.6.2",
     "@testing-library/user-event": "^14.5.2",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/maplibre-gl": "^1.14.0",
     "@types/sql.js": "^1.4.9",
     "@vitest/ui": "3.0.5",
     "jsdom": "^25.0.1",
@@ -34,6 +35,7 @@
   "dependencies": {
     "beercss": "^3.11.33",
     "better-sqlite3": "^12.2.0",
-    "flag-icons": "^7.5.0"
+    "flag-icons": "^7.5.0",
+    "maplibre-gl": "^5.7.0"
   }
 }

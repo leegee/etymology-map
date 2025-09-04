@@ -3,6 +3,7 @@ import { createSignal } from "solid-js";
 import WordSearch from "~/components/WordSearch";
 import TranslationList from "~/components/TranslationList";
 import { Translation } from "~/types";
+import Map from "~/components/Map";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
@@ -33,7 +34,8 @@ export default function Home() {
       </nav>
 
       <main class="responsive">
-        <TranslationList translations={translations()} />
+        {/* <TranslationList translations={translations()} /> */}
+        <Map translations={translations()} />
       </main>
     </>
   );
