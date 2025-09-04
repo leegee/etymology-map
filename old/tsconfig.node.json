@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    /* Compilation output */
+    "target": "ES2023",
+    "module": "CommonJS", // CommonJS for Node scripts
+    "lib": [
+      "ES2023"
+    ],
+    "outDir": "./dist", // optional if you compile to JS
+    "skipLibCheck": true,
+    "types": [
+      "node"
+    ],
+    /* Module resolution */
+    "moduleResolution": "node",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    /* Linting / strictness */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    /* TypeScript incremental build */
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo"
+  },
+  "include": [
+    "scripts/**/*.ts",
+    "vite.config.ts",
+    "app.config.ts",
+  ]
+}

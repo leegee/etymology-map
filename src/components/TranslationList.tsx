@@ -1,5 +1,5 @@
 type Translation = {
-    word: string;
+    translation: string;
     lang: string;
 };
 
@@ -9,12 +9,14 @@ type Props = {
 
 export default function TranslationList(props: Props) {
     return (
-        <ul>
+        <div class="center padding medium-width">
+            <h2>Results</h2>
             {props.translations.map(tr => (
-                <li>
-                    {tr.lang}: {tr.word}
-                </li>
+                <div class="row" lang={tr.lang}>
+                    <div class="card-subtitle">{tr.lang}</div>
+                    <div class="card-text">{tr.translation}</div>
+                </div>
             ))}
-        </ul>
+        </div>
     );
 }

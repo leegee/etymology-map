@@ -14,7 +14,7 @@ export default function WordSearch(props: Props) {
 
     return (
         <form onSubmit={submit}>
-            <nav class="no-space">
+            <nav class="no-space medium-width center padding">
                 <div class="field max border left-round">
                     <input
                         type="text"

@@ -1,12 +1,16 @@
 import fs from "fs";
 import readline from "readline";
 import Database from "better-sqlite3";
+import { langauges } from "../src/lib/langs";
 
 const targetPOS: string[] = []; // ["noun", "verb"]
-const germanicLangs = new Set([
-    "en", "de", "nl", "sv", "no", "nn", "da", "is", "fo", "af",
-    "yi", "ang", "ohg", "non", "got", "nds", "fry", "frr", "frs", "li"
-]);
+const germanicLangs = new Set(
+    // [
+    //     "en", "de", "nl", "sv", "no", "nn", "da", "is", "fo", "af",
+    //     "yi", "ang", "ohg", "non", "got", "nds", "fry", "frr", "frs", "li"
+    // ]
+    Object.keys(langauges)
+);
 
 const db = new Database("words.db");
 
