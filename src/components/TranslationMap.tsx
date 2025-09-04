@@ -1,4 +1,4 @@
-import { onMount, onCleanup, createEffect } from "solid-js";
+import { onMount, onCleanup, createEffect, Accessor } from "solid-js";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -40,13 +40,21 @@ export default function TranslationMap(props: Props) {
     createEffect(() => {
         if (!map) return;
 
+        const currentSubjects = props.subject;
+        const currentTranslations = props.translations;
+
+        console.log("TranslationMap subjects", currentSubjects);
+        console.log("TranslationMap translations", currentTranslations);
+
+        if (!currentSubjects.length && !currentTranslations.length) return;
+
         // Remove old markers
         markers.forEach(m => m.remove());
         markers.length = 0;
 
         // Group translations by language
         const grouped: Record<string, Translation[]> = {};
-        props.translations.forEach(tr => {
+        currentTranslations.forEach(tr => {
             if (!grouped[tr.lang]) grouped[tr.lang] = [];
             grouped[tr.lang].push(tr);
         });
@@ -58,7 +66,7 @@ export default function TranslationMap(props: Props) {
 
             const tableRows = trs.map(tr =>
                 `<tr>
-                    <td>${tr.year_start}–${tr.year_end}</td>
+                    <td>${tr.year_start ?? ""}–${tr.year_end ?? ""}</td>
                     <td>${tr.translation}</td>
                 </tr>`
             ).join("");
@@ -85,12 +93,12 @@ export default function TranslationMap(props: Props) {
             addMarker(lang.coords[0], lang.coords[1], html);
         });
 
-        if (props.subject?.length) {
-            const defLang = languages[props.subject[0].lang];
+        if (currentSubjects.length) {
+            const defLang = languages[currentSubjects[0].lang];
             if (defLang) {
-                const tableRows = props.subject.map(def =>
+                const tableRows = currentSubjects.map(def =>
                     `<tr>
-                       <td>${def.year_start}–${def.year_end} &mdash; ${def.word} (${def.pos})</td>
+                       <td>${def.year_start ?? ""}–${def.year_end ?? ""} &mdash; ${def.word} (${def.pos})</td>
                      </tr><tr>
                        <td>${def.etymology}</td>
                      </tr>`
