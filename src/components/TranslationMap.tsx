@@ -87,19 +87,20 @@ export default function TranslationMap(props: Props) {
 
         // Add subject word definitions as a single marker
         console.log('subject', props.subject.length)
+
         if (props.subject?.length) {
+
             console.log('subject =', props.subject, props.subject[0])
+
             const defLang = languages[props.subject[0].lang];
             if (defLang) {
                 const tableRows = props.subject.map(def =>
                     `<tr>
-                    <td>${def.year_start}–${def.year_end}</td>
-                    <td>${def.word} (${def.pos})</td>
-                    <td>${def.etymology}</td>
-                    </tr>`
+                       <td>${def.year_start}–${def.year_end} &mdash; ${def.word} (${def.pos})</td>
+                     </tr><tr>
+                       <td>${def.etymology}</td>
+                     </tr>`
                 ).join("");
-
-                const scrollClass = props.subject.length > 2 ? "scroll small-height" : "";
 
                 const html = `
                     <article class="fill">
@@ -107,8 +108,8 @@ export default function TranslationMap(props: Props) {
                             <div class="large">
                                 <h5 title="${defLang.countryCode}"><span class="fi fi-${defLang.countryCode}"></span></h5>
                             </div>
-                            <div class="${scrollClass}">
-                                <table class="table table-striped table-hover small-space">
+                            <div class="small-height small-width scroll">
+                                <table class="table table-striped table-hover small-small-space fill small-width">
                                     <tbody>
                                         ${tableRows}
                                     </tbody>
