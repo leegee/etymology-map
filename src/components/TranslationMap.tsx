@@ -63,13 +63,15 @@ export default function TranslationMap(props: Props) {
                 </tr>`
             ).join("");
 
+            const scrollClass = trs.length > 2 ? "scroll small-height" : "";
+
             const html = `
                 <article class="fill">
                     <div class="row top-align">
                         <div class="large">
-                            <h5><span class="fi fi-${lang.countryCode}"></span></h5>
+                            <h5 title="${lang.englishName}"><span class="fi fi-${lang.countryCode}"></span></h5>
                         </div>
-                        <div class="small-height scroll">
+                        <div class="${scrollClass}">
                             <table class="border table-striped table-hover small-space">
                                 <tbody>
                                     ${tableRows}
@@ -83,7 +85,7 @@ export default function TranslationMap(props: Props) {
             addMarker(lang.coords[0], lang.coords[1], html);
         });
 
-        // Add subject word definitions (all in same language) as a single marker
+        // Add subject word definitions as a single marker
         if (props.subject?.length) {
             const defLang = languages[props.subject[0].lang];
             if (defLang) {
@@ -94,13 +96,15 @@ export default function TranslationMap(props: Props) {
                     </tr>`
                 ).join("");
 
+                const scrollClass = props.subject.length > 2 ? "scroll small-height" : "";
+
                 const html = `
                     <article class="fill">
                         <div class="row top-align">
                             <div class="large">
-                                <h5><span class="fi fi-${defLang.countryCode}"></span></h5>
+                                <h5 title="${defLang.countryCode}"><span class="fi fi-${defLang.countryCode}"></span></h5>
                             </div>
-                            <div class="small-height scroll">
+                            <div class="${scrollClass}">
                                 <table class="table table-striped table-hover small-space">
                                     <tbody>
                                         ${tableRows}
