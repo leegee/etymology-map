@@ -17,7 +17,7 @@ export default function TranslationMap(props: Props) {
         map = new maplibregl.Map({
             container: mapContainer!,
             style: "https://demotiles.maplibre.org/style.json",
-            center: [10, 50],
+            center: [10, 57],
             zoom: 4
         });
     });
