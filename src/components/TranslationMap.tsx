@@ -69,8 +69,8 @@ export default function TranslationMap(props: Props) {
                         <div class="large">
                             <h5><span class="fi fi-${lang.countryCode}"></span></h5>
                         </div>
-                        <div class="max">
-                            <table class="table table-striped table-hover small-space">
+                        <div class="small-height scroll">
+                            <table class="border table-striped table-hover small-space">
                                 <tbody>
                                     ${tableRows}
                                 </tbody>
@@ -100,7 +100,7 @@ export default function TranslationMap(props: Props) {
                             <div class="large">
                                 <h5><span class="fi fi-${defLang.countryCode}"></span></h5>
                             </div>
-                            <div class="max">
+                            <div class="small-height scroll">
                                 <table class="table table-striped table-hover small-space">
                                     <tbody>
                                         ${tableRows}
