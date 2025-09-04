@@ -1,4 +1,14 @@
+# Etymology Map
+
+Currently maps Germanic roots of English words
+
+wip
+
 ## Use
+
+    mkdir data
+    curl -L -o data/raw-wiktextract-data.jsonl \
+        https://huggingface.co/datasets/aletrn/wiktionary/resolve/main/raw-wiktextract-data.jsonl
 
     bun db:build
 
