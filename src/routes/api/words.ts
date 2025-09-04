@@ -1,6 +1,6 @@
 import type { APIEvent } from "@solidjs/start/server";
 import Database from "better-sqlite3";
-import type { Translation, WordDefinition } from "~/types";
+import type { Translation, SubjectDefinition } from "~/types";
 
 export async function GET(event: APIEvent) {
     const url = new URL(event.request.url);
@@ -11,13 +11,13 @@ export async function GET(event: APIEvent) {
     // Exact match first
     let subject = db
         .prepare("SELECT * FROM words WHERE LOWER(word) = LOWER(?) LIMIT 1")
-        .all(q) as WordDefinition[];
+        .all(q) as SubjectDefinition[];
 
     // Fallback to prefix search
     if (subject.length === 0) {
         subject = db
             .prepare("SELECT * FROM words WHERE LOWER(word) LIKE LOWER(?) LIMIT 50")
-            .all(`${q}%`) as WordDefinition[];
+            .all(`${q}%`) as SubjectDefinition[];
     }
 
     // Look up translations for each word

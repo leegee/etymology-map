@@ -1,20 +1,20 @@
 import "./index.css";
 import { createSignal } from "solid-js";
 import WordSearch from "~/components/WordSearch";
-import { Translation, WordDefinition } from "~/types";
+import { Translation, SubjectDefinition } from "~/types";
 // import TranslationList from "~/components/TranslationList";
 import TranslationMap from "~/components/TranslationMap";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
-  const [subject, setSubject] = createSignal<WordDefinition[]>([]);
+  const [subject, setSubject] = createSignal<SubjectDefinition[]>([]);
 
   const handleSearch = async (word: string) => {
     const res = await fetch(`/api/words?word=${encodeURIComponent(word)}`);
     if (!res.ok) return;
     const data = await res.json();
     setTranslations(data.translations as Translation[]);
-    setSubject(data.subject as WordDefinition[]);
+    setSubject(data.subject as SubjectDefinition[]);
   };
 
   return (

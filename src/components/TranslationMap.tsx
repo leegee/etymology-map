@@ -4,10 +4,10 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import styles from "./TranslationMap.module.css";
 import { languages } from "~/lib/langs";
-import type { Translation, WordDefinition } from "~/types";
+import type { Translation, SubjectDefinition } from "~/types";
 
 type Props = {
-    subject: WordDefinition[];
+    subject: SubjectDefinition[];
     translations: Translation[];
 };
 

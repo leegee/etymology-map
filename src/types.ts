@@ -1,4 +1,4 @@
-export type WordDefinition = {
+export type SubjectDefinition = {
     id: number;
     word: string;
     lang: string;
