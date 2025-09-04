@@ -1,9 +1,9 @@
 import "./index.css";
 import { createSignal } from "solid-js";
 import WordSearch from "~/components/WordSearch";
-import TranslationList from "~/components/TranslationList";
 import { Translation } from "~/types";
-import Map from "~/components/TranslationMap";
+// import TranslationList from "~/components/TranslationList";
+import TranslationMap from "~/components/TranslationMap";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
@@ -35,7 +35,7 @@ export default function Home() {
 
       <main class="responsive">
         {/* <TranslationList translations={translations()} /> */}
-        <Map translations={translations()} />
+        <TranslationMap translations={translations()} />
       </main>
     </>
   );
