@@ -85,13 +85,7 @@ export default function TranslationMap(props: Props) {
             addMarker(lang.coords[0], lang.coords[1], html);
         });
 
-        // Add subject word definitions as a single marker
-        console.log('subject', props.subject.length)
-
         if (props.subject?.length) {
-
-            console.log('subject =', props.subject, props.subject[0])
-
             const defLang = languages[props.subject[0].lang];
             if (defLang) {
                 const tableRows = props.subject.map(def =>
@@ -119,7 +113,6 @@ export default function TranslationMap(props: Props) {
                     </article>
                 `;
                 addMarker(defLang.coords[0], defLang.coords[1], html);
-                console.log(defLang.coords[0], defLang.coords[1], html);
             }
         }
     });
