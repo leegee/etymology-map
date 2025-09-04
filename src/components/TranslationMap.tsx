@@ -86,13 +86,16 @@ export default function TranslationMap(props: Props) {
         });
 
         // Add subject word definitions as a single marker
+        console.log('subject', props.subject.length)
         if (props.subject?.length) {
+            console.log('subject =', props.subject, props.subject[0])
             const defLang = languages[props.subject[0].lang];
             if (defLang) {
                 const tableRows = props.subject.map(def =>
                     `<tr>
-                        <td>${def.year_start}–${def.year_end}</td>
-                        <td>${def.word} (${def.pos})</td>
+                    <td>${def.year_start}–${def.year_end}</td>
+                    <td>${def.word} (${def.pos})</td>
+                    <td>${def.etymology}</td>
                     </tr>`
                 ).join("");
 
@@ -115,6 +118,7 @@ export default function TranslationMap(props: Props) {
                     </article>
                 `;
                 addMarker(defLang.coords[0], defLang.coords[1], html);
+                console.log(defLang.coords[0], defLang.coords[1], html);
             }
         }
     });

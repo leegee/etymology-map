@@ -1,9 +1,9 @@
 import Database from "better-sqlite3";
+import { DB_FILE_PATH } from "../src/config";
 
-// Open the database in read-only mode
-const db = new Database("words.db", { readonly: true });
+const db = new Database(DB_FILE_PATH, { readonly: true });
 
-const q = "craft";
+const q = process.argv[2]?.trim() || "cat";
 
 let words: any[] = db
     .prepare("SELECT * FROM words WHERE LOWER(word) = LOWER(?) LIMIT 1")

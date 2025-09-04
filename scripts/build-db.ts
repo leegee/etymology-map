@@ -1,12 +1,23 @@
 import fs from "fs";
 import readline from "readline";
 import Database from "better-sqlite3";
+import { DB_FILE_PATH } from "../src/config";
 import { languages } from "../src/lib/langs";
 
 const targetPOS: string[] = []; // ["noun", "verb"]
 const germanicLangs = new Set(Object.keys(languages));
 
-const db = new Database("words.db");
+const langMap: Record<string, string> = {
+    English: "en",
+    German: "de",
+    Dutch: "nl",
+    Swedish: "sv",
+    Norwegian: "nn",
+    Danish: "da",
+    // add more as needed
+};
+
+const db = new Database(DB_FILE_PATH);
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS words (
@@ -64,6 +75,9 @@ const insertBatch = db.transaction((entries: any[]) => {
     for (const entry of entries) {
         const [yearStart, yearEnd] = parseYears(entry.etymology_text);
 
+        // Determine ISO code for the word
+        const isoLang = langMap[entry.lang] || entry.lang || "en";
+
         // Filter translations to Germanic and non-empty
         const germanicTranslations = (entry.translations || [])
             .filter((tr: any) => {
@@ -79,7 +93,7 @@ const insertBatch = db.transaction((entries: any[]) => {
 
         const info = insertWord.run(
             entry.word,
-            entry.lang || "en",
+            isoLang,
             entry.pos,
             entry.etymology_text || null,
             yearStart,

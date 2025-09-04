@@ -1,12 +1,18 @@
 import type { APIEvent } from "@solidjs/start/server";
 import Database from "better-sqlite3";
+import { DB_FILE_PATH } from "../../config";
 import type { Translation, SubjectDefinition } from "~/types";
 
-export async function GET(event: APIEvent) {
+export type WordsResponse = {
+    subject: SubjectDefinition[];
+    translations: Translation[];
+};
+
+export async function GET(event: APIEvent): Promise<Response> {
     const url = new URL(event.request.url);
     const q = (url.searchParams.get("word") ?? "").trim();
 
-    const db = new Database("words.db", { readonly: true });
+    const db = new Database(DB_FILE_PATH, { readonly: true });
 
     // Exact match first
     let subject = db
@@ -27,9 +33,9 @@ export async function GET(event: APIEvent) {
 
     db.close();
 
-    // Return both words and translations
-    return new Response(
-        JSON.stringify({ subject, translations }),
-        { headers: { "Content-Type": "application/json" } }
-    );
+    const response: WordsResponse = { subject, translations };
+
+    return new Response(JSON.stringify(response), {
+        headers: { "Content-Type": "application/json" },
+    });
 }
