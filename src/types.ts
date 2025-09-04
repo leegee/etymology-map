@@ -8,11 +8,11 @@ export type WordRow = {
     year_end?: number | null;
 };
 
-export type TranslationRow = {
-    word_id: number;
-} & Translation;
-
 export type Translation = {
+    id: number;
+    word_id: number;
     translation: string;
     lang: string;
+    year_start?: number;
+    year_end?: number;
 };

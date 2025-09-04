@@ -26,26 +26,45 @@ export default function TranslationMap(props: Props) {
         if (!map || !props.translations) return;
 
         // Remove old markers safely
-        markers.forEach(m => {
-            if (m.remove) m.remove();
-        });
+        markers.forEach(m => m.remove());
         markers.length = 0;
 
-        // Add new markers
+        // Group translations by language
+        const grouped: Record<string, Translation[]> = {};
         props.translations.forEach(tr => {
-            const lang = languages[tr.lang];
+            if (!grouped[tr.lang]) grouped[tr.lang] = [];
+            grouped[tr.lang].push(tr);
+        });
+
+        // Add markers
+        Object.entries(grouped).forEach(([langCode, trs]) => {
+            const lang = languages[langCode];
             if (!lang) return;
+
+            const tableRows = trs.map(tr =>
+                `<tr>
+                    <td>${tr.year_start}–${tr.year_end}</td>
+                    <td>${tr.translation}</td>
+                </tr>`
+            ).join("");
 
             const el = document.createElement("div");
             el.className = styles["map-marker"];
             el.innerHTML = `
                 <article class="fill">
-                    <div class="row">
-                        <span class="fi fi-${lang.countryCode}"></span>
-                        <div class="max">
-                            <h6>${tr.translation}</h6>
-                        </div>
+                <div class="row top-align">
+                    <div class="large">
+                        <h5><span class="fi fi-${lang.countryCode}"></span></h5>
                     </div>
+                    <div class="max ">
+                        <table class="table table-striped table-hover small-space">
+                            <thead/>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 </article>
             `;
 

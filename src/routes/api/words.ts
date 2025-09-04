@@ -1,6 +1,6 @@
 import type { APIEvent } from "@solidjs/start/server";
 import Database from "better-sqlite3";
-import type { TranslationRow, WordRow } from "~/types";
+import type { Translation, WordRow } from "~/types";
 
 export async function GET(event: APIEvent) {
     const url = new URL(event.request.url);
@@ -20,9 +20,8 @@ export async function GET(event: APIEvent) {
             .all(`${q}%`) as WordRow[];
     }
 
-    // Fetch translations
-    const translations: TranslationRow[] = words.flatMap((w) =>
-        db.prepare("SELECT * FROM translations WHERE word_id = ?").all(w.id) as TranslationRow[]
+    const translations: Translation[] = words.flatMap((w) =>
+        db.prepare("SELECT * FROM translations WHERE word_id = ?").all(w.id) as Translation[]
     );
 
     db.close();
