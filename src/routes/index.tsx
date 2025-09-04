@@ -1,9 +1,8 @@
+import "./index.css";
 import { createSignal } from "solid-js";
 import WordSearch from "~/components/WordSearch";
 import TranslationList from "~/components/TranslationList";
-import "./index.css";
-
-type Translation = { word: string; lang: string };
+import { Translation } from "~/types";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
@@ -16,10 +15,26 @@ export default function Home() {
   };
 
   return (
-    <main class="responsive">
-      <h1>Germanic Etymology Map</h1>
-      <WordSearch onSearch={handleSearch} />
-      <TranslationList translations={translations()} />
-    </main>
+    <>
+      <nav class="bottom">
+        <WordSearch onSearch={handleSearch} />
+        {/* <a>
+          <i>home</i>
+          <div>Home</div>
+        </a>
+        <a>
+          <i>search</i>
+          <div>Search</div>
+        </a>
+        <a>
+          <i>share</i>
+          <div>share</div>
+        </a> */}
+      </nav>
+
+      <main class="responsive">
+        <TranslationList translations={translations()} />
+      </main>
+    </>
   );
 }

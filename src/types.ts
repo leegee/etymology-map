@@ -10,6 +10,9 @@ export type WordRow = {
 
 export type TranslationRow = {
     word_id: number;
+} & Translation;
+
+export type Translation = {
     translation: string;
     lang: string;
 };

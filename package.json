@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "beercss": "^3.11.33",
-    "better-sqlite3": "^12.2.0"
+    "better-sqlite3": "^12.2.0",
+    "flag-icons": "^7.5.0"
   }
 }
