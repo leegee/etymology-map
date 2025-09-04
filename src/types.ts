@@ -1,4 +1,4 @@
-export type WordRow = {
+export type WordDefinition = {
     id: number;
     word: string;
     lang: string;
