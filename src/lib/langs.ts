@@ -20,7 +20,7 @@ export const languages: Record<
     af: { flag: "🇿🇦", englishName: "Afrikaans", nativeName: "Afrikaans", coords: [-25.7479, 28.2293], countryCode: "za" },
 
     yi: { flag: "🇮🇱", englishName: "Yiddish", nativeName: "ייִדיש", coords: [31.7683, 35.2137], countryCode: "il" },
-    ang: { flag: "🏴", englishName: "Old English", nativeName: "Ænglisc", coords: [52.3555, -1.1743], countryCode: "xx" },
+    ang: { flag: "🏴", englishName: "Old English", nativeName: "Ænglisc", coords: [52.3555, -1.1743], countryCode: "gb-en" },
     ohg: { flag: "🏴", englishName: "Old High German", nativeName: "Althochdeutsch", coords: [50.1109, 8.6821], countryCode: "xx" },
     non: { flag: "🏴", englishName: "Old Norse", nativeName: "Norrœnt", coords: [64.9631, -19.0208], countryCode: "xx" },
     got: { flag: "🏴", englishName: "Gothic", nativeName: "Gutisk", coords: [54.6872, 25.2797], countryCode: "xx" },
