@@ -8,13 +8,12 @@ const targetPOS: string[] = []; // ["noun", "verb"]
 const germanicLangs = new Set(Object.keys(languages));
 
 const langMap: Record<string, string> = {
-    English: "en",
-    German: "de",
-    Dutch: "nl",
-    Swedish: "sv",
-    Norwegian: "nn",
-    Danish: "da",
-    // add more as needed
+    english: "en",
+    german: "de",
+    dutch: "nl",
+    swedish: "sv",
+    norwegian: "nn",
+    danish: "da",
 };
 
 const db = new Database(DB_FILE_PATH);
@@ -76,7 +75,8 @@ const insertBatch = db.transaction((entries: any[]) => {
         const [yearStart, yearEnd] = parseYears(entry.etymology_text);
 
         // Determine ISO code for the word
-        const isoLang = langMap[entry.lang] || entry.lang || "en";
+        const isoLang = langMap[entry.lang?.trim().toLowerCase() || ""] || "en";
+        console.log("entry.lang:", entry.lang, "→ isoLang:", isoLang);
 
         // Filter translations to Germanic and non-empty
         const germanicTranslations = (entry.translations || [])
