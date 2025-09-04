@@ -76,7 +76,6 @@ const insertBatch = db.transaction((entries: any[]) => {
 
         // Determine ISO code for the word
         const isoLang = langMap[entry.lang?.trim().toLowerCase() || ""] || "en";
-        console.log("entry.lang:", entry.lang, "→ isoLang:", isoLang);
 
         // Filter translations to Germanic and non-empty
         const germanicTranslations = (entry.translations || [])
