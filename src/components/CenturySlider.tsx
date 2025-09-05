@@ -8,15 +8,20 @@ type Props = {
 };
 
 export default function CenturySlider(props: Props) {
-    const handleInput = (e: Event) => {
+    const handleSliderChange = (e: Event) => {
         const value = +(e.currentTarget as HTMLInputElement).value;
         props.onChange(value);
     };
 
+    const changeValue = (v: number) => {
+        const newValue = Number(props.value) + v;
+        if (newValue >= 0 && newValue < props.years.length) props.onChange(newValue);
+    }
+
     return (
         <div class="row middle">
 
-            <button class="secondary small circle no-padding" onClick={() => props.onChange(Number(props.value) - 1)}>
+            <button class="secondary small circle no-padding" onClick={() => changeValue(-1)}>
                 <i>arrow_back</i>
                 <div class="tooltip">Retreat in time</div>
             </button>
@@ -30,7 +35,7 @@ export default function CenturySlider(props: Props) {
                         max={props.years.length - 1}
                         step={1}
                         value={props.value}
-                        onInput={handleInput}
+                        onInput={handleSliderChange}
                     />
                     <span>
                         <i>calendar_month</i>
@@ -39,7 +44,7 @@ export default function CenturySlider(props: Props) {
                 {/* <span class="helper">Zoom {props.years[props.value]}</span> */}
             </div>
 
-            <button class="secondary small circle no-padding" onClick={() => props.onChange(Number(props.value) + 1)}>
+            <button class="secondary small circle no-padding" onClick={() => changeValue(1)}>
                 <i>arrow_forward</i>
                 <div class="tooltip">Advance in time</div>
             </button>
