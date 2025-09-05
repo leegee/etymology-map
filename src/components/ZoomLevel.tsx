@@ -15,7 +15,7 @@ const ZoomLevel: Component<Props> = (props) => {
                     disabled={props.disabled}
                     type="range"
                     min="0.3"
-                    max="1"
+                    max="2"
                     step="0.1"
                     value={String(props.value)}
                     onInput={(e) => props.onChange(Number((e.target as HTMLInputElement).value))}
