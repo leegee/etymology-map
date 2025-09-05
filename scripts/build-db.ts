@@ -52,20 +52,17 @@ function detectEtymologyLang(etymologyText?: string): string | null {
 function parseYears(etymologyText?: string, langCode?: string): [number | null, number | null] {
     if (!etymologyText && !langCode) return [null, null];
 
-    // explicit year in text
     const match = etymologyText?.match(/c\.?\s*(\d{3,4})/);
     if (match) {
         const y = parseInt(match[1]);
         return [y, y];
     }
 
-    // from language yearRange
     if (langCode && languages[langCode]?.yearRange) {
         const r = languages[langCode].yearRange;
         return [r[0], r[1]];
     }
 
-    // fallback for English variants if no range
     if (etymologyText) {
         const t = etymologyText.toLowerCase();
         if (t.includes("old english")) return [700, 1100];
@@ -74,6 +71,14 @@ function parseYears(etymologyText?: string, langCode?: string): [number | null, 
     }
 
     return [null, null];
+}
+
+// make sure all values are SQLite-safe
+function safeValue(val: any): string | number | null {
+    if (val === undefined || val === null) return null;
+    if (typeof val === "string" || typeof val === "number") return val;
+    if (typeof val === "bigint") return Number(val);
+    return JSON.stringify(val);
 }
 
 const db = new Database(DB_FILE_PATH);
@@ -117,39 +122,42 @@ const insertBatch = db.transaction((entries: any[]) => {
     let skippedEmpty = 0;
 
     for (const entry of entries) {
-        // normalize language
-        const rawLang = entry.lang?.trim().toLowerCase().replace(/\s+/g, "") || "english";
-        let isoLang = langMap[rawLang] || "en";
+        const rawLang = safeValue(entry.lang?.trim().toLowerCase().replace(/\s+/g, "") || "english");
+        let isoLang = langMap[rawLang as string] || "en";
 
-        // override with etymology-only detection
         const etyLang = detectEtymologyLang(entry.etymology_text);
         if (etyLang) isoLang = etyLang;
 
         const [yearStart, yearEnd] = parseYears(entry.etymology_text, isoLang);
 
-        // track word language usage
         if (!usedLangs.has(isoLang)) usedLangs.set(isoLang, { words: 0, translations: 0 });
         usedLangs.get(isoLang)!.words++;
 
         const info = insertWord.run(
-            entry.word,
-            isoLang,
-            entry.pos,
-            entry.etymology_text || null,
-            yearStart,
-            yearEnd
+            safeValue(entry.word),
+            safeValue(isoLang),
+            safeValue(entry.pos),
+            safeValue(entry.etymology_text),
+            safeValue(yearStart),
+            safeValue(yearEnd)
         );
         const wordId = info.lastInsertRowid;
         wordsInserted++;
 
         (entry.translations || []).forEach((tr: any) => {
-            const trLangRaw = tr.lang_code?.trim().toLowerCase().replace(/\s+/g, "") || "??";
-            const trLang = langMap[trLangRaw] || trLangRaw;
-            const word = tr.word?.trim();
+            const trLangRaw = safeValue(tr.lang_code?.trim().toLowerCase().replace(/\s+/g, "") || "??");
+            const trLang = langMap[trLangRaw as string] || trLangRaw as string;
+            const word = safeValue(tr.word);
             if (!word) { skippedEmpty++; return; }
 
             const [trStart, trEnd] = parseYears(tr.etymology_text, trLang);
-            insertTrans.run(wordId, word, trLang, trStart, trEnd);
+            insertTrans.run(
+                safeValue(wordId),
+                word,
+                safeValue(trLang),
+                safeValue(trStart),
+                safeValue(trEnd)
+            );
             translationsInserted++;
 
             if (!usedLangs.has(trLang)) usedLangs.set(trLang, { words: 0, translations: 0 });
@@ -197,8 +205,8 @@ async function main() {
         totalSkippedEmpty += res.skippedEmpty;
     }
 
-    db.prepare(` VACUUM; `).run();
-    db.prepare(` PRAGMA optimize; `).run();
+    db.prepare(`VACUUM;`).run();
+    db.prepare(`PRAGMA optimize;`).run();
 
     console.log("=== Import summary ===");
     console.log(`Total words inserted: ${totalWords}`);
@@ -208,6 +216,14 @@ async function main() {
     Array.from(usedLangs).sort().forEach(([lang, counts]) => {
         console.log(`${lang}: ${counts.words} words, ${counts.translations} translations`);
     });
+
+    // --- Additional counts from DB ---
+    const wordCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM words`).get() as { cnt: number }).cnt;
+    const transCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM translations`).get() as { cnt: number }).cnt;
+
+    console.log("\n=== Verification counts from DB ===");
+    console.log(`Words table count: ${wordCount}`);
+    console.log(`Translations table count: ${transCount}`);
 }
 
 main().catch(err => {

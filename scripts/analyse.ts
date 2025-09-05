@@ -1,22 +1,52 @@
-// scripts/refined-analysis.ts
 import fs from "fs";
 import readline from "readline";
+import Database from "better-sqlite3";
+import { DB_FILE_PATH } from "../src/config";
+import { languages } from "../src/lib/langs";
 
-type AnyObj = Record<string, any>;
+const targetPOS: string[] = []; // ["noun", "verb"]
 
-const PATH = "./data/kaikki.org-dictionary-English.jsonl";
-const SAMPLE_LIMIT = 20;
+// normalize word language names to ISO codes
+const langMap: Record<string, string> = {
+    english: "en",
+    german: "de",
+    dutch: "nl",
+    olddutch: "nl",
+    swedish: "sv",
+    norwegian: "nn",
+    danish: "da",
+    icelandic: "is",
+    faroese: "fo",
+    afrikaans: "af",
+    yiddish: "yi",
+    oldenglish: "ang",
+    oldhighgerman: "ohg",
+    oldnorse: "non",
+    gothic: "got",
+    lowgerman: "nds",
+    frisian: "fry",
+    northfrisian: "frr",
+    eastfrisian: "frs",
+    limburgish: "li",
+    latin: "la",
+    latelate: "lla",
+    ancientgreek: "grc",
+    moderngreek: "el",
+    coptic: "cop",
+    egyptian: "egy",
+    "proto-indo-european": "pie",
+    "proto-germanic": "pgm",
+};
 
+// --- Proto-language & noise detection ---
 const protoRe = /\b(proto[- ]\w+)\b/i;
 const fromXRe = /from\s+([a-zA-Z-]+)/i;
 
-// whitelist for valid source languages in `from X` phrases
 const sourceLangWhitelist = new Set([
-    "latin", "greek", "sanskrit", "maori", "arabic", "hebrew", "armenian", "tamil",
-    "persian", "korean", "chinese", "japanese", "hindi", "egyptian"
+    "latin", "greek", "sanskrit", "maori", "arabic", "hebrew", "armenian",
+    "tamil", "persian", "korean", "chinese", "japanese", "hindi", "egyptian"
 ]);
 
-// trivial patterns to skip
 const trivialPatterns: RegExp[] = [
     /^\?\s*\+\s*-/i,
     /^shortening/i,
@@ -28,9 +58,9 @@ const trivialPatterns: RegExp[] = [
     /^from the genus/i
 ];
 
-// blacklist for pseudo/procedural proto-language strings
 const protoBlacklist: RegExp[] = [
     /Root/i,
+    /^Proto$/i,
     /Elements/i,
     /Phrase/i,
     /Base/i,
@@ -38,98 +68,204 @@ const protoBlacklist: RegExp[] = [
     /Word Used To Mean/i
 ];
 
-async function main() {
-    if (!fs.existsSync(PATH)) {
-        console.error("File not found:", PATH);
-        process.exit(1);
+function detectEtymologyLang(etymologyText?: string): string | null {
+    if (!etymologyText) return null;
+    const text = etymologyText.toLowerCase();
+    for (const [key, code] of Object.entries(langMap)) {
+        if (text.includes(key)) return code;
     }
-
-    const rl = readline.createInterface({
-        input: fs.createReadStream(PATH),
-        crlfDelay: Infinity,
-    });
-
-    const validLangs = new Map<string, number>();
-    const protoLangs = new Map<string, number>();
-    const noise = new Map<string, number>();
-    const samples: { line: number; word?: string; etym?: string }[] = [];
-
-    let lineNo = 0;
-
-    for await (const line of rl) {
-        lineNo++;
-        if (!line.trim()) continue;
-
-        let entry: AnyObj;
-        try {
-            entry = JSON.parse(line);
-        } catch {
-            continue;
-        }
-
-        const etym = (entry.etymology_text || entry.etymology || "").toString().trim();
-        if (!etym) continue;
-
-        // skip trivial patterns
-        if (trivialPatterns.some(pat => pat.test(etym))) {
-            noise.set(etym, (noise.get(etym) || 0) + 1);
-            continue;
-        }
-
-        // detect proto-languages
-        const protoMatch = etym.match(protoRe);
-        if (protoMatch) {
-            const proto = protoMatch[1].replace(/[- ]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
-
-            // skip if it matches blacklist
-            if (protoBlacklist.some(pat => pat.test(proto))) {
-                noise.set(proto, (noise.get(proto) || 0) + 1);
-                continue;
-            }
-
-            protoLangs.set(proto, (protoLangs.get(proto) || 0) + 1);
-            if (samples.length < SAMPLE_LIMIT) samples.push({ line: lineNo, word: entry.word, etym });
-            continue;
-        }
-
-        // detect "from X" source language
-        const fromMatch = etym.match(fromXRe);
-        if (fromMatch) {
-            const src = fromMatch[1].toLowerCase();
-            if (sourceLangWhitelist.has(src)) {
-                validLangs.set(src, (validLangs.get(src) || 0) + 1);
-                if (samples.length < SAMPLE_LIMIT) samples.push({ line: lineNo, word: entry.word, etym });
-                continue;
-            } else {
-                noise.set(src, (noise.get(src) || 0) + 1);
-                continue;
-            }
-        }
-
-        // fallback to Noise
-        noise.set(etym, (noise.get(etym) || 0) + 1);
-    }
-
-    function printCategory(title: string, map: Map<string, number>) {
-        console.log(`\n=== ${title} ===`);
-        Array.from(map.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 50)
-            .forEach(([k, v]) => console.log(`${k.padEnd(25)} ${v}`));
-    }
-
-    printCategory("Valid languages", validLangs);
-    printCategory("Proto-languages", protoLangs);
-    printCategory("Noise / other", noise);
-
-    console.log("\n=== Sample entries ===");
-    samples.forEach(s => console.log(`Line ${s.line}: ${s.word} -> ${s.etym}`));
-
-    console.log("\nTotal entries scanned:", lineNo);
-    console.log("Done.");
+    return null;
 }
 
-main().catch(err => {
-    console.error(err);
-    process.exit(1);
+function parseYears(etymologyText?: string, langCode?: string): [number | null, number | null] {
+    if (!etymologyText && !langCode) return [null, null];
+
+    const match = etymologyText?.match(/c\.?\s*(\d{3,4})/);
+    if (match) {
+        const y = parseInt(match[1]);
+        return [y, y];
+    }
+
+    if (langCode && languages[langCode]?.yearRange) return languages[langCode].yearRange;
+
+    if (etymologyText) {
+        const t = etymologyText.toLowerCase();
+        if (t.includes("old english")) return [700, 1100];
+        if (t.includes("middle english")) return [1100, 1500];
+        if (t.includes("modern english")) return [1500, 9999];
+    }
+
+    return [null, null];
+}
+
+function safeValue(val: any): string | number | null {
+    if (val === undefined || val === null) return null;
+    if (typeof val === "string" || typeof val === "number") return val;
+    if (typeof val === "bigint") return Number(val);
+    return JSON.stringify(val);
+}
+
+// --- Database setup ---
+const db = new Database(DB_FILE_PATH);
+db.exec(`
+CREATE TABLE IF NOT EXISTS words (
+  id INTEGER PRIMARY KEY,
+  word TEXT NOT NULL,
+  lang TEXT NOT NULL,
+  pos TEXT,
+  etymology TEXT,
+  year_start INTEGER,
+  year_end INTEGER
+);
+CREATE TABLE IF NOT EXISTS translations (
+  id INTEGER PRIMARY KEY,
+  word_id INTEGER NOT NULL REFERENCES words(id),
+  translation TEXT NOT NULL,
+  lang TEXT NOT NULL,
+  year_start INTEGER,
+  year_end INTEGER
+);
+`);
+
+const insertWord = db.prepare(`
+  INSERT INTO words (word, lang, pos, etymology, year_start, year_end)
+  VALUES (?, ?, ?, ?, ?, ?)
+`);
+
+const insertTrans = db.prepare(`
+  INSERT INTO translations (word_id, translation, lang, year_start, year_end)
+  VALUES (?, ?, ?, ?, ?)
+`);
+
+const usedLangs = new Map<string, { words: number; translations: number }>();
+
+// --- Main batch insert with filtering ---
+const insertBatch = db.transaction((entries: any[]) => {
+    let wordsInserted = 0;
+    let translationsInserted = 0;
+    let skippedEmpty = 0;
+
+    for (const entry of entries) {
+        const etym = (entry.etymology_text || entry.etymology || "").toString().trim();
+        if (!etym || trivialPatterns.some(p => p.test(etym))) continue;
+
+        // --- Proto-language detection ---
+        let protoLang: string | null = null;
+        const protoMatch = etym.match(protoRe);
+        if (protoMatch) {
+            protoLang = protoMatch[1].replace(/[- ]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+            if (protoBlacklist.some(p => p.test(protoLang!))) protoLang = null;
+        }
+
+        // --- "From X" detection ---
+        let srcLang: string | null = null;
+        const fromMatch = etym.match(fromXRe);
+        if (fromMatch) {
+            const candidate = fromMatch[1].toLowerCase();
+            if (sourceLangWhitelist.has(candidate)) srcLang = candidate;
+        }
+
+        // Determine final ISO language
+        const rawLang = safeValue(entry.lang?.trim().toLowerCase().replace(/\s+/g, "") || "english");
+        let isoLang = langMap[rawLang as string] || "en";
+        const etyLang = detectEtymologyLang(etym);
+        if (etyLang) isoLang = etyLang;
+        if (protoLang) isoLang = protoLang.toLowerCase(); // proto takes precedence
+        if (srcLang) isoLang = srcLang;
+
+        const [yearStart, yearEnd] = parseYears(etym, isoLang);
+
+        if (!usedLangs.has(isoLang)) usedLangs.set(isoLang, { words: 0, translations: 0 });
+        usedLangs.get(isoLang)!.words++;
+
+        const info = insertWord.run(
+            safeValue(entry.word),
+            safeValue(isoLang),
+            safeValue(entry.pos),
+            safeValue(etym),
+            safeValue(yearStart),
+            safeValue(yearEnd)
+        );
+        const wordId = info.lastInsertRowid;
+        wordsInserted++;
+
+        (entry.translations || []).forEach((tr: any) => {
+            const trLangRaw = safeValue(tr.lang_code?.trim().toLowerCase().replace(/\s+/g, "") || "??");
+            const trLang = langMap[trLangRaw as string] || trLangRaw as string;
+            const word = safeValue(tr.word);
+            if (!word) { skippedEmpty++; return; }
+
+            const [trStart, trEnd] = parseYears(tr.etymology_text, trLang);
+            insertTrans.run(
+                safeValue(wordId),
+                word,
+                safeValue(trLang),
+                safeValue(trStart),
+                safeValue(trEnd)
+            );
+            translationsInserted++;
+            if (!usedLangs.has(trLang)) usedLangs.set(trLang, { words: 0, translations: 0 });
+            usedLangs.get(trLang)!.translations++;
+        });
+    }
+
+    return { wordsInserted, translationsInserted, skippedEmpty };
 });
+
+async function main() {
+    const rl = readline.createInterface({
+        input: fs.createReadStream("./data/kaikki.org-dictionary-English.jsonl"),
+        crlfDelay: Infinity
+    });
+
+    const batchSize = 1000;
+    let batch: any[] = [];
+    let totalWords = 0;
+    let totalTranslations = 0;
+    let totalSkippedEmpty = 0;
+
+    for await (const line of rl) {
+        try {
+            const entry = JSON.parse(line);
+            if (targetPOS.length && !targetPOS.includes(entry.pos)) continue;
+
+            batch.push(entry);
+            if (batch.length >= batchSize) {
+                const res = insertBatch(batch);
+                totalWords += res.wordsInserted;
+                totalTranslations += res.translationsInserted;
+                totalSkippedEmpty += res.skippedEmpty;
+                batch = [];
+            }
+        } catch (err) {
+            console.error("Failed to parse line:", err);
+        }
+    }
+
+    if (batch.length > 0) {
+        const res = insertBatch(batch);
+        totalWords += res.wordsInserted;
+        totalTranslations += res.translationsInserted;
+        totalSkippedEmpty += res.skippedEmpty;
+    }
+
+    db.prepare(`VACUUM;`).run();
+    db.prepare(`PRAGMA optimize;`).run();
+
+    console.log("=== Import summary ===");
+    console.log(`Total words inserted: ${totalWords}`);
+    console.log(`Total translations inserted: ${totalTranslations}`);
+    console.log(`Skipped empty translations: ${totalSkippedEmpty}`);
+    console.log("\nLanguages used in this import:");
+    Array.from(usedLangs).sort().forEach(([lang, counts]) => {
+        console.log(`${lang}: ${counts.words} words, ${counts.translations} translations`);
+    });
+
+    const wordCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM words`).get() as { cnt: number }).cnt;
+    const transCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM translations`).get() as { cnt: number }).cnt;
+    console.log("\n=== Verification counts from DB ===");
+    console.log(`Words table count: ${wordCount}`);
+    console.log(`Translations table count: ${transCount}`);
+}
+
+main().catch(err => console.error("Fatal error:", err));
