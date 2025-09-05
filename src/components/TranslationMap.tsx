@@ -21,13 +21,11 @@ export default function TranslationMap(props: Props) {
     let map: maplibregl.Map | undefined;
     const markers: maplibregl.Marker[] = [];
 
-    // helper to create a marker with Solid content
     const addMarker = (lat: number, lng: number, content: () => JSX.Element) => {
         const markerEl = document.createElement("div");
         markerEl.className = styles["map-marker"];
         markerEl.style.cursor = "default";
 
-        // render Solid JSX into this marker element
         render(content, markerEl);
 
         const marker = new maplibregl.Marker({ element: markerEl })
@@ -50,6 +48,9 @@ export default function TranslationMap(props: Props) {
 
     createEffect(() => {
         if (!map) return;
+
+        console.log("Subject: ", props.subject);
+        console.log("Translations: ", props.translations);
 
         const currentSubjects = props.subject;
         const currentTranslations = props.translations;
@@ -76,11 +77,13 @@ export default function TranslationMap(props: Props) {
 
             const scrollClasses = () => {
                 const tooMany = trs.length > 2;
-                const tooLong = trs.some(tr => (tr.translation?.length ?? 0) > 100); // adjust 100 chars as threshold
+                const tooLong = trs.some(tr => (tr.translation?.length ?? 0) > 150);
                 return (tooMany || tooLong) ? 'small-height scroll' : '';
             };
 
-            if (!IGNORE_SOUTH_AFRICA || lang.countryCode !== 'za') bounds.extend({ lat: lang.coords[0], lng: lang.coords[1] });
+            if (!IGNORE_SOUTH_AFRICA || lang.countryCode !== 'za') {
+                bounds.extend({ lat: lang.coords[0], lng: lang.coords[1] });
+            }
 
             addMarker(lang.coords[0], lang.coords[1], () => {
                 return (
@@ -164,9 +167,8 @@ export default function TranslationMap(props: Props) {
                 );
             });
 
-            map.fitBounds(bounds, {
-                padding: 20
-            });
+
+            if (props.translations.length && !bounds.isEmpty()) map.fitBounds(bounds, { padding: 20 });
         }
     });
 
