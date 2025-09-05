@@ -7,6 +7,9 @@ import styles from "./TranslationMap.module.css";
 import { languages } from "~/lib/langs";
 import type { Translation, SubjectDefinition } from "~/types";
 
+// Don't include in zoom-to-bounds, as it skews the lovely northern map view
+const IGNORE_SOUTH_AFRICA = true;
+
 type Props = {
     subject: SubjectDefinition[];
     translations: Translation[];
@@ -53,6 +56,8 @@ export default function TranslationMap(props: Props) {
 
         if (!currentSubjects.length && !currentTranslations.length) return;
 
+        const bounds = new maplibregl.LngLatBounds();
+
         // Remove old markers
         markers.forEach((m) => m.remove());
         markers.length = 0;
@@ -74,6 +79,8 @@ export default function TranslationMap(props: Props) {
                 const tooLong = trs.some(tr => (tr.translation?.length ?? 0) > 100); // adjust 100 chars as threshold
                 return (tooMany || tooLong) ? 'small-height scroll' : '';
             };
+
+            if (!IGNORE_SOUTH_AFRICA || lang.countryCode !== 'za') bounds.extend({ lat: lang.coords[0], lng: lang.coords[1] });
 
             addMarker(lang.coords[0], lang.coords[1], () => {
                 return (
@@ -110,6 +117,8 @@ export default function TranslationMap(props: Props) {
         if (currentSubjects.length) {
             const defLang = languages[currentSubjects[0].lang];
             if (!defLang) return;
+
+            bounds.extend({ lat: defLang.coords[0], lng: defLang.coords[1] });
 
             addMarker(defLang.coords[0], defLang.coords[1], () => {
                 const [open, setOpen] = createSignal(false);
@@ -153,6 +162,10 @@ export default function TranslationMap(props: Props) {
                         </Portal>
                     </>
                 );
+            });
+
+            map.fitBounds(bounds, {
+                padding: 20
             });
         }
     });
