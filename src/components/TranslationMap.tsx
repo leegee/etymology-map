@@ -35,6 +35,8 @@ export default function TranslationMap(props: Props) {
             center: [5, 60],
             zoom: 4
         });
+
+        map.getCanvas().style.cursor = "default";
     });
 
     createEffect(() => {
@@ -110,7 +112,7 @@ export default function TranslationMap(props: Props) {
                             <div class="large">
                                 <h5 title="${defLang.countryCode}"><span class="fi fi-${defLang.countryCode}"></span></h5>
                             </div>
-                            <div class="small-height small-width scroll">
+                            <div class="small-width small-height scroll">
                                 <table class="table table-striped table-hover small-small-space fill small-width">
                                     <tbody>
                                         ${tableRows}
