@@ -68,29 +68,29 @@ export default function TranslationMap(props: Props) {
 
             const tableRows = trs.map(tr =>
                 `<tr>
-                    <td>${tr.year_start ?? ""}–${tr.year_end ?? ""}</td>
-                    <td>${tr.translation}</td>
-                </tr>`
+                        <th class="top-align">${tr.year_start ?? ""}–${tr.year_end ?? ""}</th>
+                        <td>${tr.translation}</td>
+                    </tr>`
             ).join("");
 
-            const scrollClass = trs.length > 2 ? "scroll small-height" : "";
+            const scrollClass = (trs.length > 2 || tableRows.length > 200) ? " small-height scroll " : "";
 
             const html = `
-                <article class="fill">
-                    <div class="row top-align">
-                        <div class="large">
-                            <h5 title="${lang.englishName}"><span class="fi fi-${lang.countryCode}"></span></h5>
+                    <article class="fill">
+                        <div class="row top-align">
+                            <div class="large">
+                                <h5 title="${lang.englishName}"><span class="fi fi-${lang.countryCode}"></span></h5>
+                            </div>
+                            <div class="${scrollClass} small-width">
+                                <table class="small-space small-width">
+                                    <tbody>
+                                        ${tableRows}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="${scrollClass}">
-                            <table class="border table-striped table-hover small-space">
-                                <tbody>
-                                    ${tableRows}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </article>
-            `;
+                    </article>
+                `;
 
             addMarker(lang.coords[0], lang.coords[1], html);
         });
@@ -100,28 +100,28 @@ export default function TranslationMap(props: Props) {
             if (defLang) {
                 const tableRows = currentSubjects.map(def =>
                     `<tr>
-                       <td>${def.year_start ?? ""}–${def.year_end ?? ""} &mdash; ${def.word} (${def.pos})</td>
-                     </tr><tr>
-                       <td>${def.etymology}</td>
-                     </tr>`
+                        <td>${def.year_start ?? ""}–${def.year_end ?? ""} &mdash; ${def.word} (${def.pos})</td>
+                        </tr><tr>
+                        <td>${def.etymology}</td>
+                        </tr>`
                 ).join("");
 
                 const html = `
-                    <article class="fill">
-                        <div class="row top-align">
-                            <div class="large">
-                                <h5 title="${defLang.countryCode}"><span class="fi fi-${defLang.countryCode}"></span></h5>
+                        <article class="fill">
+                            <div class="row top-align">
+                                <div class="large">
+                                    <h5 title="${defLang.countryCode}"><span class="fi fi-${defLang.countryCode}"></span></h5>
+                                </div>
+                                <div class="small-width small-height scroll">
+                                    <table class="table table-striped table-hover small-small-space fill small-width">
+                                        <tbody>
+                                            ${tableRows}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <div class="small-width small-height scroll">
-                                <table class="table table-striped table-hover small-small-space fill small-width">
-                                    <tbody>
-                                        ${tableRows}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </article>
-                `;
+                        </article>
+                    `;
                 addMarker(defLang.coords[0], defLang.coords[1], html);
             }
         }
