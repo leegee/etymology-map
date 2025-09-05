@@ -1,6 +1,7 @@
 import { createSignal, createEffect } from "solid-js";
 
 type Props = {
+    disabled: boolean;
     years: number[];          // sorted array of years/centuries with data
     value: number;            // index into `years`
     onChange: (val: number) => void;
@@ -9,7 +10,6 @@ type Props = {
 export default function CenturySlider(props: Props) {
     const [index, setIndex] = createSignal(props.value);
 
-    // sync local state with parent
     createEffect(() => setIndex(props.value));
 
     const handleInput = (e: Event) => {
@@ -19,9 +19,10 @@ export default function CenturySlider(props: Props) {
     };
 
     return (
-        <div class="">
-            <label class="slider small medium">
+        <div class="field">
+            <label class="slider medium">
                 <input
+                    disabled={props.disabled}
                     type="range"
                     min={0}
                     max={props.years.length - 1}
@@ -29,8 +30,11 @@ export default function CenturySlider(props: Props) {
                     value={index()}
                     onInput={handleInput}
                 />
-                <div class="tooltip">{props.years[index()]}</div>
+                <span>
+                    <i>calendar_month</i>
+                </span>
             </label>
+            <span class="helper">Century {props.years[index()]}</span>
         </div>
     );
 }
