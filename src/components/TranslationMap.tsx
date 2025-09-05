@@ -77,7 +77,7 @@ export default function TranslationMap(props: Props) {
 
             addMarker(lang.coords[0], lang.coords[1], () => {
                 return (
-                    <article class="fill" style={{ zoom: props.zoom }}>
+                    <article class="fill small-padding" style={{ zoom: props.zoom }}>
                         <div class="row top-align ${scroll}">
                             <div class="large">
                                 <h5 title={lang.englishName}>
