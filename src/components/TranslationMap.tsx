@@ -10,6 +10,7 @@ import type { Translation, SubjectDefinition } from "~/types";
 type Props = {
     subject: SubjectDefinition[];
     translations: Translation[];
+    zoom: number;
 };
 
 export default function TranslationMap(props: Props) {
@@ -76,7 +77,7 @@ export default function TranslationMap(props: Props) {
 
             addMarker(lang.coords[0], lang.coords[1], () => {
                 return (
-                    <article class="fill">
+                    <article class="fill" style={{ zoom: props.zoom }}>
                         <div class="row top-align ${scroll}">
                             <div class="large">
                                 <h5 title={lang.englishName}>

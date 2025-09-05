@@ -88,6 +88,7 @@ export default function Home() {
         <TranslationMap
           subject={subject()}
           translations={filteredTranslations()}
+          zoom={0.75}
         />
       </main>
     </>
