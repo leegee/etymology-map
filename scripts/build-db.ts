@@ -158,6 +158,9 @@ async function main() {
         totalSkippedNonGermanic += res.skippedNonGermanic;
     }
 
+    db.prepare(` VACUUM; `).run();
+    db.prepare(` PRAGMA optimize; `).run();
+
     console.log("Done!");
     console.log(`Total words inserted: ${totalWords}`);
     console.log(`Total translations inserted: ${totalTranslations}`);
