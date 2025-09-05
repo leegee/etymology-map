@@ -20,7 +20,7 @@ export default function CenturySlider(props: Props) {
 
     return (
         <div class="field">
-            <label class="slider medium">
+            <label class="slider small">
                 <input
                     disabled={props.disabled}
                     type="range"
