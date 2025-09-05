@@ -6,29 +6,33 @@ import { Translation, SubjectDefinition } from "~/types";
 import { WordsResponse } from "./api/words";
 import TranslationMap from "~/components/TranslationMap";
 import CenturySlider from "~/components/CenturySlider";
+import AllCenturiesToggle from "~/components/AllCenturiesToggle";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
   const [subject, setSubject] = createSignal<SubjectDefinition[]>([]);
+  const [showAll, setShowAll] = createSignal(false);
 
-  // Compute unique centuries with data
+  const currentYear = new Date().getFullYear();
+
   const availableYears = createMemo(() => {
     const set = new Set<number>();
     translations().forEach(t => {
       const start = Number(t.year_start) || 0;
-      const end = Number(t.year_end) || 9999;
-      for (let y = start; y <= end; y += 100) set.add(y); // step by century
+      let end = Number(t.year_end) || 9999;
+      if (end === 9999) end = currentYear;
+
+      for (let y = start; y <= end; y += 100) set.add(y);
     });
     return Array.from(set).sort((a, b) => a - b);
   });
 
-  // Index into availableYears
   const [sliderIndex, setSliderIndex] = createSignal(0);
 
-  // Convert slider index to single-year range for filtering
   const dateRange = createMemo(() => {
+    if (showAll()) return [0, currentYear];
     const year = availableYears()[sliderIndex()] || 0;
-    return [year, year]; // single century
+    return [year, year];
   });
 
   const handleSearch = async (word: string) => {
@@ -42,7 +46,8 @@ export default function Home() {
   const filteredTranslations = createMemo(() =>
     translations().filter(t => {
       const start = Number(t.year_start) || 0;
-      const end = Number(t.year_end) || 9999;
+      let end = Number(t.year_end) || 9999;
+      if (end === 9999) end = currentYear;
       const [min, max] = dateRange();
       return start <= max && end >= min;
     })
@@ -50,8 +55,7 @@ export default function Home() {
 
   createEffect(() => {
     console.log("dateRange", dateRange());
-    console.log("raw subjects", subject());
-    console.log("raw translations", translations());
+    console.log("showAll", showAll());
     console.log("filtered translations", filteredTranslations());
   });
 
@@ -60,7 +64,13 @@ export default function Home() {
       <nav class="bottom">
         <WordSearch onSearch={handleSearch} />
 
+        <AllCenturiesToggle
+          value={showAll()}
+          onChange={setShowAll}
+        />
+
         <CenturySlider
+          disabled={showAll()}
           years={availableYears()}
           value={sliderIndex()}
           onChange={setSliderIndex}
