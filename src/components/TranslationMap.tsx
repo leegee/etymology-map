@@ -19,6 +19,8 @@ export default function TranslationMap(props: Props) {
     const addMarker = (lat: number, lng: number, html: string) => {
         const el = document.createElement("div");
         el.className = styles["map-marker"];
+        el.style.cursor = "default";
+        el.style.pointerEvents = "auto";
         el.innerHTML = html;
 
         const marker = new maplibregl.Marker({ element: el })
@@ -44,9 +46,6 @@ export default function TranslationMap(props: Props) {
 
         const currentSubjects = props.subject;
         const currentTranslations = props.translations;
-
-        console.log("TranslationMap subjects", currentSubjects);
-        console.log("TranslationMap translations", currentTranslations);
 
         if (!currentSubjects.length && !currentTranslations.length) return;
 
