@@ -33,7 +33,9 @@ export default function Home() {
       set.add(endCentury);
     });
 
-    return Array.from(set).sort((a, b) => a - b);
+    const rv = Array.from(set).sort((a, b) => a - b);
+    // console.log('Years available', rv)
+    return rv;
   });
 
   const [sliderIndex, setSliderIndex] = createSignal(0);

@@ -49,8 +49,8 @@ export default function TranslationMap(props: Props) {
     createEffect(() => {
         if (!map) return;
 
-        console.log("Subject: ", props.subject);
-        console.log("Translations: ", props.translations);
+        // console.log("Subject: ", props.subject);
+        // console.log("Translations: ", props.translations);
 
         const currentSubjects = props.subject;
         const currentTranslations = props.translations;
