@@ -16,7 +16,7 @@ const AllCenturiesToggle: Component<Props> = (props) => {
                     onChange={e => props.onChange(e.currentTarget.checked)}
                 />
                 <span>
-                    <i>all_inclusive </i>
+                    <i>all_inclusive</i>
                 </span>
             </label>
             <span class="helper">All</span>
