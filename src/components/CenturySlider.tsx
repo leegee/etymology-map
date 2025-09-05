@@ -14,13 +14,14 @@ export default function CenturySlider(props: Props) {
     };
 
     return (
-        <div class="row">
+        <div class="row middle">
 
-            <button class="secondary small circle" onClick={() => props.onChange(Number(props.value) - 1)}>
+            <button class="secondary small circle no-padding" onClick={() => props.onChange(Number(props.value) - 1)}>
                 <i>arrow_back</i>
+                <div class="tooltip">Retreat in time</div>
             </button>
 
-            <div class="field">
+            <div class="row">
                 <label class="slider medium">
                     <input
                         disabled={props.disabled}
@@ -32,15 +33,20 @@ export default function CenturySlider(props: Props) {
                         onInput={handleInput}
                     />
                     <span>
-                        <i>zoom</i>
+                        <i>calendar_month</i>
                     </span>
                 </label>
-                <span class="helper">Zoom {props.years[props.value]}</span>
+                {/* <span class="helper">Zoom {props.years[props.value]}</span> */}
             </div>
 
-            <button class="secondary small circle" onClick={() => props.onChange(Number(props.value) + 1)}>
+            <button class="secondary small circle no-padding" onClick={() => props.onChange(Number(props.value) + 1)}>
                 <i>arrow_forward</i>
+                <div class="tooltip">Advance in time</div>
             </button>
+
+            <div class="tooltip">Time period
+                <br />
+                {props.years[props.value]} {(props.years[props.value] >= 0 ? 'AD' : 'BC')}</div>
         </div>
     );
 }
