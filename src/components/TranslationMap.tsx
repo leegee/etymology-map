@@ -69,33 +69,30 @@ export default function TranslationMap(props: Props) {
             if (!lang) return;
 
             addMarker(lang.coords[0], lang.coords[1], () => {
-                const [open, setOpen] = createSignal(false);
                 return (
-                    <>
-                        <article class="fill">
-                            <div class="row top-align">
-                                <div class="large">
-                                    <h5 title={lang.englishName}>
-                                        <span class={`fi fi-${lang.countryCode}`}></span>
-                                    </h5>
-                                </div>
-                                <div class="small-width">
-                                    <table class="small-space small-width">
-                                        <tbody>
-                                            <For each={trs}>
-                                                {(tr) => (
-                                                    <tr>
-                                                        <th class="top-align">{tr.year_start ?? ""}–{tr.year_end ?? ""}</th>
-                                                        <td>{tr.translation}</td>
-                                                    </tr>
-                                                )}
-                                            </For>
-                                        </tbody>
-                                    </table>
-                                </div>
+                    <article class="fill">
+                        <div class="row top-align">
+                            <div class="large">
+                                <h5 title={lang.englishName}>
+                                    <span class={`fi fi-${lang.countryCode}`}></span>
+                                </h5>
                             </div>
-                        </article>
-                    </>
+                            <div class="small-width">
+                                <table class="small-space small-width">
+                                    <tbody>
+                                        <For each={trs}>
+                                            {(tr) => (
+                                                <tr>
+                                                    <th class="top-align">{tr.year_start ?? ""}–{tr.year_end ?? ""}</th>
+                                                    <td>{tr.translation}</td>
+                                                </tr>
+                                            )}
+                                        </For>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </article>
                 );
             });
         });
