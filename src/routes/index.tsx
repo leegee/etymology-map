@@ -93,7 +93,8 @@ export default function Home() {
         />
       </nav>
 
-      <main class="responsive">
+      {/* <main class="responsive"> */}
+      <main>
         <TranslationMap
           subject={subject()}
           translations={filteredTranslations()}
