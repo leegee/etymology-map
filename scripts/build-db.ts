@@ -34,6 +34,7 @@ const langMap: Record<string, string> = {
     moderngreek: "el",
     coptic: "cop",
     egyptian: "egy",
+    "proto": "pie",
     "proto-indo-european": "pie",
     "proto-germanic": "pgm",
 };
