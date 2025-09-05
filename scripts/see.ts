@@ -25,6 +25,6 @@ for (const w of words) {
     translations.push(...trans);
 }
 
-console.log("Translations:", translations);
+console.log("Translations:", JSON.stringify(translations, null, 4));
 
 db.close();
