@@ -14,7 +14,7 @@ export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
   const [subject, setSubject] = createSignal<SubjectDefinition[]>([]);
   const [showAll, setShowAll] = createSignal(true);
-  const [zoomLevel, setZoomLevel] = createSignal(0.5);
+  const [zoomLevel, setZoomLevel] = createSignal(0.75);
 
   const currentYear = new Date().getFullYear();
 
