@@ -7,10 +7,13 @@ type AnyObj = Record<string, any>;
 const PATH = "./data/kaikki.org-dictionary-English.jsonl";
 const SAMPLE_LIMIT = 20;
 
-const protoRe = /\b(proto[- ]\w+)\b/i;
+// detect proto-languages in etymology text
+const protoRe = /\b(proto[- ]\w+(?:[- ]\w+)*)\b/i;
+
+// detect "from X" source language
 const fromXRe = /from\s+([a-zA-Z-]+)/i;
 
-// whitelist for valid source languages in `from X` phrases
+// whitelist for valid source languages
 const sourceLangWhitelist = new Set([
     "latin", "greek", "sanskrit", "maori", "arabic", "hebrew", "armenian", "tamil",
     "persian", "korean", "chinese", "japanese", "hindi", "egyptian"
@@ -69,7 +72,11 @@ async function main() {
         // detect proto-languages
         const protoMatch = etym.match(protoRe);
         if (protoMatch) {
-            const proto = protoMatch[1].replace(/[- ]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+            // normalize: "Proto-West Germanic" -> "Proto West Germanic"
+            const proto = protoMatch[1]
+                .replace(/[-_]/g, " ")
+                .replace(/\b\w/g, c => c.toUpperCase())
+                .trim();
             protoLangs.set(proto, (protoLangs.get(proto) || 0) + 1);
             if (samples.length < SAMPLE_LIMIT) samples.push({ line: lineNo, word: entry.word, etym });
             continue;
