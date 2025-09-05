@@ -18,13 +18,19 @@ export default function Home() {
 
   const availableYears = createMemo(() => {
     const set = new Set<number>();
-    translations().forEach(t => {
-      const start = Number(t.year_start) || 0;
-      let end = Number(t.year_end) || 9999;
-      if (end === 9999) end = currentYear;
+    const currentYear = new Date().getFullYear();
 
-      for (let y = start; y <= end; y += 100) set.add(y);
+    translations().forEach(t => {
+      const start = Number(t.year_start) ?? 0;
+      let end = Number(t.year_end) ?? currentYear;
+
+      const startCentury = Math.floor(start / 100) * 100;
+      const endCentury = Math.floor(end / 100) * 100;
+
+      set.add(startCentury);
+      set.add(endCentury);
     });
+
     return Array.from(set).sort((a, b) => a - b);
   });
 
@@ -40,26 +46,25 @@ export default function Home() {
     const res = await fetch(`/api/words?word=${encodeURIComponent(word)}`);
     if (!res.ok) return;
     const data = (await res.json()) as WordsResponse;
-    const { subjects, translations } = normalizeWords(data.subject, data.translations);
-    setSubject(subjects as SubjectDefinition[]);
+    const translations = normalizeWords(data.translations);
+    setSubject(data.subject as SubjectDefinition[]);
     setTranslations(translations as Translation[]);
   };
 
   const filteredTranslations = createMemo(() =>
     translations().filter(t => {
       const start = Number(t.year_start) || 0;
-      let end = Number(t.year_end) || 9999;
-      if (end === 9999) end = currentYear;
+      let end = Number(t.year_end) || currentYear;
       const [min, max] = dateRange();
       return start <= max && end >= min;
     })
   );
 
-  createEffect(() => {
-    console.log("dateRange", dateRange());
-    console.log("showAll", showAll());
-    console.log("filtered translations", filteredTranslations());
-  });
+  // createEffect(() => {
+  //   console.log("dateRange", dateRange());
+  //   console.log("showAll", showAll());
+  //   console.log("filtered translations", filteredTranslations());
+  // });
 
   return (
     <>
