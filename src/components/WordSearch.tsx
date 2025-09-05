@@ -10,8 +10,11 @@ export default function WordSearch(props: Props) {
 
     const submit = (e: Event) => {
         e.preventDefault();
-        props.onSearch(value());
-        inputRef?.focus(); // Re-focus after submit
+        const v = value().trim();
+        if (v) {
+            props.onSearch(v);
+            inputRef?.focus(); // Re-focus after submit
+        }
     };
 
     onMount(() => inputRef?.focus());
@@ -25,6 +28,7 @@ export default function WordSearch(props: Props) {
                         type="search"
                         placeholder="Enter English word..."
                         value={value()}
+                        pattern="[\s\w]+"
                         onInput={e => setValue((e.target as HTMLInputElement).value)}
                         ref={inputRef}
                     />
