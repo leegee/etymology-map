@@ -26,7 +26,8 @@ export default function WordSearch(props: Props) {
                     <input
                         name="search"
                         type="search"
-                        placeholder="Enter English word..."
+                        placeholder="Enter an English word"
+                        title="Use only word characters"
                         value={value()}
                         pattern="[\s\w]+"
                         onInput={e => setValue((e.target as HTMLInputElement).value)}
