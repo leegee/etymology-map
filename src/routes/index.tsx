@@ -7,6 +7,7 @@ import { WordsResponse } from "./api/words";
 import TranslationMap from "~/components/TranslationMap";
 import CenturySlider from "~/components/CenturySlider";
 import AllCenturiesToggle from "~/components/AllCenturiesToggle";
+import { normalizeWords } from "~/lib/normalizeWords";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
@@ -39,8 +40,9 @@ export default function Home() {
     const res = await fetch(`/api/words?word=${encodeURIComponent(word)}`);
     if (!res.ok) return;
     const data = (await res.json()) as WordsResponse;
-    setTranslations(data.translations as Translation[]);
-    setSubject(data.subject as SubjectDefinition[]);
+    const { subjects, translations } = normalizeWords(data.subject, data.translations);
+    setSubject(subjects as SubjectDefinition[]);
+    setTranslations(translations as Translation[]);
   };
 
   const filteredTranslations = createMemo(() =>
