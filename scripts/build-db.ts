@@ -49,7 +49,6 @@ function detectEtymologyLang(etymologyText?: string): string | null {
     return null;
 }
 
-// helper: determine year range
 function parseYears(etymologyText?: string, langCode?: string): [number | null, number | null] {
     if (!etymologyText && !langCode) return [null, null];
 
@@ -77,7 +76,6 @@ function parseYears(etymologyText?: string, langCode?: string): [number | null, 
     return [null, null];
 }
 
-// open database
 const db = new Database(DB_FILE_PATH);
 
 db.exec(`
