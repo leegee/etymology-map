@@ -1,4 +1,5 @@
-import { onMount, onCleanup, createEffect, Accessor } from "solid-js";
+import { onMount, onCleanup, createEffect, createSignal, For, JSX } from "solid-js";
+import { Portal, render } from "solid-js/web";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -16,14 +17,16 @@ export default function TranslationMap(props: Props) {
     let map: maplibregl.Map | undefined;
     const markers: maplibregl.Marker[] = [];
 
-    const addMarker = (lat: number, lng: number, html: string) => {
-        const el = document.createElement("div");
-        el.className = styles["map-marker"];
-        el.style.cursor = "default";
-        el.style.pointerEvents = "auto";
-        el.innerHTML = html;
+    // helper to create a marker with Solid content
+    const addMarker = (lat: number, lng: number, content: () => JSX.Element) => {
+        const markerEl = document.createElement("div");
+        markerEl.className = styles["map-marker"];
+        markerEl.style.cursor = "default";
 
-        const marker = new maplibregl.Marker({ element: el })
+        // render Solid JSX into this marker element
+        render(content, markerEl);
+
+        const marker = new maplibregl.Marker({ element: markerEl })
             .setLngLat([lng, lat])
             .addTo(map!);
 
@@ -35,7 +38,7 @@ export default function TranslationMap(props: Props) {
             container: mapContainer!,
             style: "https://demotiles.maplibre.org/style.json",
             center: [5, 60],
-            zoom: 4
+            zoom: 4,
         });
 
         map.getCanvas().style.cursor = "default";
@@ -50,12 +53,12 @@ export default function TranslationMap(props: Props) {
         if (!currentSubjects.length && !currentTranslations.length) return;
 
         // Remove old markers
-        markers.forEach(m => m.remove());
+        markers.forEach((m) => m.remove());
         markers.length = 0;
 
         // Group translations by language
         const grouped: Record<string, Translation[]> = {};
-        currentTranslations.forEach(tr => {
+        currentTranslations.forEach((tr) => {
             if (!grouped[tr.lang]) grouped[tr.lang] = [];
             grouped[tr.lang].push(tr);
         });
@@ -65,69 +68,90 @@ export default function TranslationMap(props: Props) {
             const lang = languages[langCode];
             if (!lang) return;
 
-            const tableRows = trs.map(tr =>
-                `<tr>
-                        <th class="top-align">${tr.year_start ?? ""}–${tr.year_end ?? ""}</th>
-                        <td>${tr.translation}</td>
-                    </tr>`
-            ).join("");
-
-            const scrollClass = (trs.length > 2 || tableRows.length > 200) ? " small-height scroll " : "";
-
-            const html = `
-                    <article class="fill">
-                        <div class="row top-align">
-                            <div class="large">
-                                <h5 title="${lang.englishName}"><span class="fi fi-${lang.countryCode}"></span></h5>
-                            </div>
-                            <div class="${scrollClass} small-width">
-                                <table class="small-space small-width">
-                                    <tbody>
-                                        ${tableRows}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </article>
-                `;
-
-            addMarker(lang.coords[0], lang.coords[1], html);
-        });
-
-        if (currentSubjects.length) {
-            const defLang = languages[currentSubjects[0].lang];
-            if (defLang) {
-                const tableRows = currentSubjects.map(def =>
-                    `<tr>
-                        <td>${def.year_start ?? ""}–${def.year_end ?? ""} &mdash; ${def.word} (${def.pos})</td>
-                        </tr><tr>
-                        <td>${def.etymology}</td>
-                        </tr>`
-                ).join("");
-
-                const html = `
+            addMarker(lang.coords[0], lang.coords[1], () => {
+                const [open, setOpen] = createSignal(false);
+                return (
+                    <>
                         <article class="fill">
                             <div class="row top-align">
-                                <div class="large tiny-padding">
-                                    <h6 title="${defLang.countryCode}"><span class="fi fi-${defLang.countryCode}"></span></h6>
+                                <div class="large">
+                                    <h5 title={lang.englishName}>
+                                        <span class={`fi fi-${lang.countryCode}`}></span>
+                                    </h5>
                                 </div>
-                                <div class="small-width small-height scroll">
-                                    <table class="table table-striped table-hover small-small-space fill small-width">
+                                <div class="small-width">
+                                    <table class="small-space small-width">
                                         <tbody>
-                                            ${tableRows}
+                                            <For each={trs}>
+                                                {(tr) => (
+                                                    <tr>
+                                                        <th class="top-align">{tr.year_start ?? ""}–{tr.year_end ?? ""}</th>
+                                                        <td>{tr.translation}</td>
+                                                    </tr>
+                                                )}
+                                            </For>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                         </article>
-                    `;
-                addMarker(defLang.coords[0], defLang.coords[1], html);
-            }
+                    </>
+                );
+            });
+        });
+
+        // Add subjects / etymology marker
+        if (currentSubjects.length) {
+            const defLang = languages[currentSubjects[0].lang];
+            if (!defLang) return;
+
+            addMarker(defLang.coords[0], defLang.coords[1], () => {
+                const [open, setOpen] = createSignal(false);
+                return (
+                    <>
+                        <article class="fill">
+                            <h6 title={defLang.countryCode} onClick={() => setOpen(true)}>
+                                <span class={`fi fi-${defLang.countryCode}`}></span>
+                                &nbsp;
+                                {currentSubjects.map(s => s.word).join(', ')}
+                            </h6>
+                        </article >
+
+                        <Portal mount={document.body}>
+                            <dialog class="top" open={open()} onClick={(e) => e.stopPropagation()}>
+                                <h5>Etymology</h5>
+                                <div>
+                                    <table class="table">
+                                        <thead />
+                                        <tbody>
+                                            <For each={currentSubjects}>
+                                                {(def) => (
+                                                    <>
+                                                        <tr>
+                                                            <td>{def.year_start ?? ""}–{def.year_end ?? ""} &mdash; {def.word} ({def.pos})</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>{def.etymology}</td>
+                                                        </tr>
+                                                    </>
+                                                )}
+                                            </For>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <nav class="right-align">
+                                    <button class="transparent link" onClick={() => setOpen(false)}>Close</button>
+                                </nav>
+                            </dialog>
+                        </Portal>
+                    </>
+                );
+            });
         }
     });
 
     onCleanup(() => {
-        markers.forEach(m => m.remove());
+        markers.forEach((m) => m.remove());
         map?.remove();
     });
 
