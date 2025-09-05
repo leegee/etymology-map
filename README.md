@@ -35,6 +35,7 @@ wip
 * Time slider
 * Expand to Latinate and other words
 
-## Credit
+## Sources
 
-https://huggingface.co/datasets/aletrn/wiktionary/blob/main/raw-wiktextract-data.jsonl
+Words come from a [dump](https://huggingface.co/datasets/aletrn/wiktionary/blob/main/raw-wiktextract-data.jsonl)
+of Wiktionary. Out of 1.41 million entries, only around 8,000 have translations.
