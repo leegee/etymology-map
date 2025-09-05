@@ -68,16 +68,22 @@ export default function TranslationMap(props: Props) {
             const lang = languages[langCode];
             if (!lang) return;
 
+            const scrollClasses = () => {
+                const tooMany = trs.length > 2;
+                const tooLong = trs.some(tr => (tr.translation?.length ?? 0) > 100); // adjust 100 chars as threshold
+                return (tooMany || tooLong) ? 'small-height scroll' : '';
+            };
+
             addMarker(lang.coords[0], lang.coords[1], () => {
                 return (
                     <article class="fill">
-                        <div class="row top-align">
+                        <div class="row top-align ${scroll}">
                             <div class="large">
                                 <h5 title={lang.englishName}>
                                     <span class={`fi fi-${lang.countryCode}`}></span>
                                 </h5>
                             </div>
-                            <div class="small-width">
+                            <div class={"small-width " + scrollClasses()}>
                                 <table class="small-space small-width">
                                     <tbody>
                                         <For each={trs}>
