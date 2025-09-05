@@ -108,8 +108,8 @@ export default function TranslationMap(props: Props) {
                 const html = `
                         <article class="fill">
                             <div class="row top-align">
-                                <div class="large">
-                                    <h5 title="${defLang.countryCode}"><span class="fi fi-${defLang.countryCode}"></span></h5>
+                                <div class="large tiny-padding">
+                                    <h6 title="${defLang.countryCode}"><span class="fi fi-${defLang.countryCode}"></span></h6>
                                 </div>
                                 <div class="small-width small-height scroll">
                                     <table class="table table-striped table-hover small-small-space fill small-width">
