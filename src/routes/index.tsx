@@ -5,12 +5,31 @@ import WordSearch from "~/components/WordSearch";
 import { Translation, SubjectDefinition } from "~/types";
 import { WordsResponse } from "./api/words";
 import TranslationMap from "~/components/TranslationMap";
-import TimeSlider from "~/components/TimeSlider";
+import CenturySlider from "~/components/CenturySlider";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
   const [subject, setSubject] = createSignal<SubjectDefinition[]>([]);
-  const [dateRange, setDateRange] = createSignal<[number, number]>([100, new Date().getFullYear()]);
+
+  // Compute unique centuries with data
+  const availableYears = createMemo(() => {
+    const set = new Set<number>();
+    translations().forEach(t => {
+      const start = Number(t.year_start) || 0;
+      const end = Number(t.year_end) || 9999;
+      for (let y = start; y <= end; y += 100) set.add(y); // step by century
+    });
+    return Array.from(set).sort((a, b) => a - b);
+  });
+
+  // Index into availableYears
+  const [sliderIndex, setSliderIndex] = createSignal(0);
+
+  // Convert slider index to single-year range for filtering
+  const dateRange = createMemo(() => {
+    const year = availableYears()[sliderIndex()] || 0;
+    return [year, year]; // single century
+  });
 
   const handleSearch = async (word: string) => {
     const res = await fetch(`/api/words?word=${encodeURIComponent(word)}`);
@@ -20,7 +39,6 @@ export default function Home() {
     setSubject(data.subject as SubjectDefinition[]);
   };
 
-
   const filteredTranslations = createMemo(() =>
     translations().filter(t => {
       const start = Number(t.year_start) || 0;
@@ -29,7 +47,6 @@ export default function Home() {
       return start <= max && end >= min;
     })
   );
-
 
   createEffect(() => {
     console.log("dateRange", dateRange());
@@ -43,11 +60,10 @@ export default function Home() {
       <nav class="bottom">
         <WordSearch onSearch={handleSearch} />
 
-        <TimeSlider
-          min={300}
-          max={new Date().getFullYear()}
-          value={dateRange()}
-          onChange={setDateRange}
+        <CenturySlider
+          years={availableYears()}
+          value={sliderIndex()}
+          onChange={setSliderIndex}
         />
       </nav>
 
