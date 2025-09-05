@@ -54,3 +54,7 @@ The data is not great. Here's the entry for 'dog' via `tsx scripts/see.tsx dog`:
         }
     Translations: []
 
+
+# To Do
+
+Maybe [this](http://etym.org/) is better?
