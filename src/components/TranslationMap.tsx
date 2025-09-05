@@ -113,7 +113,7 @@ export default function TranslationMap(props: Props) {
                 const [open, setOpen] = createSignal(false);
                 return (
                     <>
-                        <article class="fill">
+                        <article class="fill" style={{ zoom: props.zoom }}>
                             <h6 title={defLang.countryCode} onClick={() => setOpen(true)}>
                                 <span class={`fi fi-${defLang.countryCode}`}></span>
                                 &nbsp;

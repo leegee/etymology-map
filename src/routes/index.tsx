@@ -8,11 +8,13 @@ import TranslationMap from "~/components/TranslationMap";
 import CenturySlider from "~/components/CenturySlider";
 import AllCenturiesToggle from "~/components/AllCenturiesToggle";
 import { normalizeWords } from "~/lib/normalizeWords";
+import ZoomLevel from "~/components/ZoomLevel";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
   const [subject, setSubject] = createSignal<SubjectDefinition[]>([]);
-  const [showAll, setShowAll] = createSignal(false);
+  const [showAll, setShowAll] = createSignal(true);
+  const [zoomLevel, setZoomLevel] = createSignal(0.5);
 
   const currentYear = new Date().getFullYear();
 
@@ -69,6 +71,11 @@ export default function Home() {
   return (
     <>
       <nav class="bottom">
+        <ZoomLevel
+          value={zoomLevel()}
+          onChange={(real: number) => setZoomLevel(real)}
+        />
+
         <WordSearch onSearch={handleSearch} />
 
         <AllCenturiesToggle
@@ -88,7 +95,7 @@ export default function Home() {
         <TranslationMap
           subject={subject()}
           translations={filteredTranslations()}
-          zoom={0.75}
+          zoom={zoomLevel()}
         />
       </main>
     </>

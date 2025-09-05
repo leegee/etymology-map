@@ -8,7 +8,7 @@ type Props = {
 
 const AllCenturiesToggle: Component<Props> = (props) => {
     return (
-        <div class="field tiny-padding top-padding">
+        <div class="field small-padding top-padding">
             <label class="switch">
                 <input
                     type="checkbox"

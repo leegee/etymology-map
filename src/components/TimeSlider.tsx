@@ -32,7 +32,7 @@ export default function TimeSlider(props: Props) {
 
     return (
         <div class="">
-            <label class="slider small medium">
+            <label class="slider medium">
                 <input
                     type="range"
                     min={props.min}

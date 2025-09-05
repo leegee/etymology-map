@@ -39,3 +39,18 @@ wip
 
 Words come from a [dump](https://huggingface.co/datasets/aletrn/wiktionary/blob/main/raw-wiktextract-data.jsonl)
 of Wiktionary. Out of 1.41 million entries, only around 8,000 have translations.
+
+The data is not great. Here's the entry for 'dog' via `tsx scripts/see.tsx dog`:
+
+    Word: 
+        {
+            id: 81477,       
+            word: 'DOG',     
+            lang: 'en',      
+            pos: 'noun',     
+            etymology: null, 
+            year_start: 1500,
+            year_end: 9999   
+        }
+    Translations: []
+
