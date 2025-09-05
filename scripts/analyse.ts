@@ -7,13 +7,10 @@ type AnyObj = Record<string, any>;
 const PATH = "./data/kaikki.org-dictionary-English.jsonl";
 const SAMPLE_LIMIT = 20;
 
-// detect proto-languages in etymology text
-const protoRe = /\b(proto[- ]\w+(?:[- ]\w+)*)\b/i;
-
-// detect "from X" source language
+const protoRe = /\b(proto[- ]\w+)\b/i;
 const fromXRe = /from\s+([a-zA-Z-]+)/i;
 
-// whitelist for valid source languages
+// whitelist for valid source languages in `from X` phrases
 const sourceLangWhitelist = new Set([
     "latin", "greek", "sanskrit", "maori", "arabic", "hebrew", "armenian", "tamil",
     "persian", "korean", "chinese", "japanese", "hindi", "egyptian"
@@ -29,6 +26,16 @@ const trivialPatterns: RegExp[] = [
     /^onomatopoeic/i,
     /^imitative/i,
     /^from the genus/i
+];
+
+// blacklist for pseudo/procedural proto-language strings
+const protoBlacklist: RegExp[] = [
+    /Root/i,
+    /Elements/i,
+    /Phrase/i,
+    /Base/i,
+    /Origin/i,
+    /Word Used To Mean/i
 ];
 
 async function main() {
@@ -72,11 +79,14 @@ async function main() {
         // detect proto-languages
         const protoMatch = etym.match(protoRe);
         if (protoMatch) {
-            // normalize: "Proto-West Germanic" -> "Proto West Germanic"
-            const proto = protoMatch[1]
-                .replace(/[-_]/g, " ")
-                .replace(/\b\w/g, c => c.toUpperCase())
-                .trim();
+            const proto = protoMatch[1].replace(/[- ]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+            // skip if it matches blacklist
+            if (protoBlacklist.some(pat => pat.test(proto))) {
+                noise.set(proto, (noise.get(proto) || 0) + 1);
+                continue;
+            }
+
             protoLangs.set(proto, (protoLangs.get(proto) || 0) + 1);
             if (samples.length < SAMPLE_LIMIT) samples.push({ line: lineNo, word: entry.word, etym });
             continue;
