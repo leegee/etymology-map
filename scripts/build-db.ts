@@ -5,17 +5,79 @@ import { DB_FILE_PATH } from "../src/config";
 import { languages } from "../src/lib/langs";
 
 const targetPOS: string[] = []; // ["noun", "verb"]
-const germanicLangs = new Set(Object.keys(languages));
 
+// normalize word language names to ISO codes
 const langMap: Record<string, string> = {
     english: "en",
     german: "de",
     dutch: "nl",
+    olddutch: "nl",
     swedish: "sv",
     norwegian: "nn",
     danish: "da",
+    icelandic: "is",
+    faroese: "fo",
+    afrikaans: "af",
+    yiddish: "yi",
+    oldenglish: "ang",
+    oldhighgerman: "ohg",
+    oldnorse: "non",
+    gothic: "got",
+    lowgerman: "nds",
+    frisian: "fry",
+    northfrisian: "frr",
+    eastfrisian: "frs",
+    limburgish: "li",
+    latin: "la",
+    latelate: "lla",
+    ancientgreek: "grc",
+    moderngreek: "el",
+    coptic: "cop",
+    egyptian: "egy",
+    "proto-indo-european": "pie",
+    "proto-germanic": "pgm",
 };
 
+// helper: detect etymology-only languages from text
+function detectEtymologyLang(etymologyText?: string): string | null {
+    if (!etymologyText) return null;
+    const text = etymologyText.toLowerCase();
+
+    for (const [key, code] of Object.entries(langMap)) {
+        if (text.includes(key)) return code;
+    }
+    return null;
+}
+
+// helper: determine year range
+function parseYears(etymologyText?: string, langCode?: string): [number | null, number | null] {
+    if (!etymologyText && !langCode) return [null, null];
+
+    // explicit year in text
+    const match = etymologyText?.match(/c\.?\s*(\d{3,4})/);
+    if (match) {
+        const y = parseInt(match[1]);
+        return [y, y];
+    }
+
+    // from language yearRange
+    if (langCode && languages[langCode]?.yearRange) {
+        const r = languages[langCode].yearRange;
+        return [r[0], r[1]];
+    }
+
+    // fallback for English variants if no range
+    if (etymologyText) {
+        const t = etymologyText.toLowerCase();
+        if (t.includes("old english")) return [700, 1100];
+        if (t.includes("middle english")) return [1100, 1500];
+        if (t.includes("modern english")) return [1500, 9999];
+    }
+
+    return [null, null];
+}
+
+// open database
 const db = new Database(DB_FILE_PATH);
 
 db.exec(`
@@ -39,22 +101,6 @@ CREATE TABLE IF NOT EXISTS translations (
 );
 `);
 
-function parseYears(etymologyText?: string): [number | null, number | null] {
-    if (!etymologyText) return [null, null];
-
-    let start: number | null = null;
-    let end: number | null = null;
-
-    if (/Old English/i.test(etymologyText)) { start = 700; end = 1100; }
-    else if (/Middle English/i.test(etymologyText)) { start = 1100; end = 1500; }
-    else if (/Modern English/i.test(etymologyText)) { start = 1500; end = 2025; }
-
-    const match = etymologyText.match(/c\.?\s*(\d{3,4})/);
-    if (match) { start = parseInt(match[1]); end = start; }
-
-    return [start, end];
-}
-
 const insertWord = db.prepare(`
   INSERT INTO words (word, lang, pos, etymology, year_start, year_end)
   VALUES (?, ?, ?, ?, ?, ?)
@@ -65,30 +111,27 @@ const insertTrans = db.prepare(`
   VALUES (?, ?, ?, ?, ?)
 `);
 
+const usedLangs = new Map<string, { words: number; translations: number }>();
+
 const insertBatch = db.transaction((entries: any[]) => {
-    let translationsInserted = 0;
     let wordsInserted = 0;
+    let translationsInserted = 0;
     let skippedEmpty = 0;
-    let skippedNonGermanic = 0;
 
     for (const entry of entries) {
-        const [yearStart, yearEnd] = parseYears(entry.etymology_text);
+        // normalize language
+        const rawLang = entry.lang?.trim().toLowerCase().replace(/\s+/g, "") || "english";
+        let isoLang = langMap[rawLang] || "en";
 
-        // Determine ISO code for the word
-        const isoLang = langMap[entry.lang?.trim().toLowerCase() || ""] || "en";
+        // override with etymology-only detection
+        const etyLang = detectEtymologyLang(entry.etymology_text);
+        if (etyLang) isoLang = etyLang;
 
-        // Filter translations to Germanic and non-empty
-        const germanicTranslations = (entry.translations || [])
-            .filter((tr: any) => {
-                const word = tr.word?.trim();
-                return word && germanicLangs.has(tr.lang_code);
-            })
-            .map((tr: any) => tr.word!.trim());
+        const [yearStart, yearEnd] = parseYears(entry.etymology_text, isoLang);
 
-        if (germanicTranslations.length === 0) {
-            skippedNonGermanic++;
-            continue; // skip this word entirely
-        }
+        // track word language usage
+        if (!usedLangs.has(isoLang)) usedLangs.set(isoLang, { words: 0, translations: 0 });
+        usedLangs.get(isoLang)!.words++;
 
         const info = insertWord.run(
             entry.word,
@@ -102,19 +145,21 @@ const insertBatch = db.transaction((entries: any[]) => {
         wordsInserted++;
 
         (entry.translations || []).forEach((tr: any) => {
+            const trLangRaw = tr.lang_code?.trim().toLowerCase().replace(/\s+/g, "") || "??";
+            const trLang = langMap[trLangRaw] || trLangRaw;
             const word = tr.word?.trim();
             if (!word) { skippedEmpty++; return; }
-            if (!germanicLangs.has(tr.lang_code)) { skippedNonGermanic++; return; }
 
-            insertTrans.run(wordId, word, tr.lang_code, yearStart, yearEnd);
+            const [trStart, trEnd] = parseYears(tr.etymology_text, trLang);
+            insertTrans.run(wordId, word, trLang, trStart, trEnd);
             translationsInserted++;
-            if (translationsInserted % 1000 === 0) {
-                console.log(`Inserted ${translationsInserted} translations so far...`);
-            }
+
+            if (!usedLangs.has(trLang)) usedLangs.set(trLang, { words: 0, translations: 0 });
+            usedLangs.get(trLang)!.translations++;
         });
     }
 
-    return { wordsInserted, translationsInserted, skippedEmpty, skippedNonGermanic };
+    return { wordsInserted, translationsInserted, skippedEmpty };
 });
 
 async function main() {
@@ -128,7 +173,6 @@ async function main() {
     let totalWords = 0;
     let totalTranslations = 0;
     let totalSkippedEmpty = 0;
-    let totalSkippedNonGermanic = 0;
 
     for await (const line of rl) {
         try {
@@ -141,8 +185,6 @@ async function main() {
                 totalWords += res.wordsInserted;
                 totalTranslations += res.translationsInserted;
                 totalSkippedEmpty += res.skippedEmpty;
-                totalSkippedNonGermanic += res.skippedNonGermanic;
-                console.log(`Inserted ${totalWords} words, ${totalTranslations} translations total`);
                 batch = [];
             }
         } catch (err) {
@@ -155,17 +197,21 @@ async function main() {
         totalWords += res.wordsInserted;
         totalTranslations += res.translationsInserted;
         totalSkippedEmpty += res.skippedEmpty;
-        totalSkippedNonGermanic += res.skippedNonGermanic;
     }
 
     db.prepare(` VACUUM; `).run();
     db.prepare(` PRAGMA optimize; `).run();
 
-    console.log("Done!");
+    console.log("=== Import summary ===");
     console.log(`Total words inserted: ${totalWords}`);
     console.log(`Total translations inserted: ${totalTranslations}`);
     console.log(`Skipped empty translations: ${totalSkippedEmpty}`);
-    console.log(`Skipped non-Germanic translations or words: ${totalSkippedNonGermanic}`);
+    console.log("\nLanguages used in this import:");
+    Array.from(usedLangs).sort().forEach(([lang, counts]) => {
+        console.log(`${lang}: ${counts.words} words, ${counts.translations} translations`);
+    });
 }
 
-main();
+main().catch(err => {
+    console.error("Fatal error:", err);
+});
