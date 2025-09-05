@@ -83,7 +83,9 @@ export default function TranslationMap(props: Props) {
                                 <h5 title={lang.englishName}>
                                     <span class={`fi fi-${lang.countryCode}`}></span>
                                 </h5>
+                                <div class="tooltip">{lang.englishName}</div>
                             </div>
+
                             <div class={"small-width " + scrollClasses()}>
                                 <table class="small-space small-width">
                                     <tbody>
@@ -116,6 +118,7 @@ export default function TranslationMap(props: Props) {
                         <article class="secondary" style={{ zoom: props.zoom }}>
                             <h4 title={defLang.countryCode} onClick={() => setOpen(true)}>
                                 <span class={`fi fi-${defLang.countryCode}`}></span>
+                                <div class="tooltip">{defLang.englishName} search subject</div>
                                 &nbsp;
                                 {currentSubjects.map(s => s.word).join(', ')}
                             </h4>
