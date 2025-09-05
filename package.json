@@ -1,5 +1,6 @@
 {
-  "name": "example-with-vitest",
+  "name": "etymology-map",
+  "description": "Mapping English word etymology",
   "scripts": {
     "dev": "vinxi dev",
     "build": "vinxi build",
@@ -8,7 +9,8 @@
     "test-watch": "vitest",
     "test-ui": "vitest --ui",
     "db:build": "bun tsx scripts/build-db.ts",
-    "db:see": "bun tsx scripts/see.ts"
+    "db:see": "bun tsx scripts/see.ts",
+    "t": "bun tsx scripts/analyse.ts"
   },
   "type": "module",
   "devDependencies": {
@@ -24,8 +26,6 @@
     "@vitest/ui": "3.0.5",
     "jsdom": "^25.0.1",
     "solid-js": "^1.9.3",
-    "sql.js": "^1.13.0",
-    "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vinxi": "^0.5.7",
