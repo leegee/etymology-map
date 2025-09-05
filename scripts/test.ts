@@ -1,115 +1,179 @@
+// scripts/refined-analysis.ts
 import fs from "fs";
 import readline from "readline";
 
+type AnyObj = Record<string, any>;
+
 const PATH = "./data/kaikki.org-dictionary-English.jsonl";
+const SAMPLE_LIMIT = 20;
 
-// whitelist of recognized languages
-const LANGUAGE_WHITELIST = new Set([
-    "latin", "french", "italian", "german", "spanish", "japanese", "arabic",
-    "polish", "dutch", "romanian", "sanskrit", "russian", "hebrew", "hindi",
-    "mandarin", "english", "swedish", "yiddish", "norwegian", "egyptian",
-    "afrikaans", "danish", "icelandic", "coptic", "faroese", "portuguese",
-    "persian", "maori", "korean", "czech", "irish", "greek", "malay",
-    "armenian", "chinese", "basque", "vietnamese", "tagalog", "scots",
-    "welsh", "ukrainian", "tamil", "catalan", "turkish", "hungarian"
-]);
+// ISO codes → normalized language names
+const validLangMap: Record<string, string> = {
+    fi: "Finnish",
+    ru: "Russian",
+    de: "German",
+    es: "Spanish",
+    fr: "French",
+    it: "Italian",
+    pl: "Polish",
+    nl: "Dutch",
+    ar: "Arabic",
+    ja: "Japanese",
+    zh: "Mandarin",
+    hi: "Hindi",
+    he: "Hebrew",
+    sv: "Swedish",
+    nn: "Norwegian",
+    da: "Danish",
+    is: "Icelandic",
+    af: "Afrikaans",
+    yi: "Yiddish",
+    en: "English",
+    sq: "Albanian",
+    eo: "Esperanto",
+    la: "Latin",
+    grc: "Ancient Greek",
+    cop: "Coptic",
+    egyptian: "Egyptian",
+    // add more as needed
+};
 
-// proto-language normalization
-function normalizeProto(s: string): string | null {
-    s = s.toLowerCase();
-    if (s.includes("proto-indo-european") || s.includes("pie")) return "Proto-Indo-European";
-    if (s.includes("proto-germanic")) return "Proto-Germanic";
-    if (s.includes("proto-west germanic")) return "Proto-West Germanic";
-    if (s.includes("proto-slavic")) return "Proto-Slavic";
-    if (s.includes("proto-celtic")) return "Proto-Celtic";
-    if (s.includes("proto-semitic")) return "Proto-Semitic";
-    if (s.includes("proto-italic")) return "Proto-Italic";
-    if (s.includes("proto-uralic")) return "Proto-Uralic";
-    if (s.includes("proto-norse")) return "Proto-Norse";
-    return null;
-}
+// proto-language normalization map
+const protoMap: Record<string, string> = {
+    "proto-indo-european": "Proto-Indo-European",
+    "proto-germanic": "Proto-Germanic",
+    "proto-west": "Proto-West Germanic",
+    "proto-itic": "Proto-Italic",
+    "proto-slavic": "Proto-Slavic",
+    "proto-celtic": "Proto-Celtic",
+    "proto-semitic": "Proto-Semitic",
+    "proto-uralic": "Proto-Uralic",
+    "proto-norse": "Proto-Norse",
+    // add more as needed
+};
 
-// noise prefixes / adjectives
-const NOISE = new Set([
-    "old", "middle", "ancient", "late", "medieval", "new", "classical",
-    "earlier", "the", "a", "an", "its", "which", "biblical", "byzantine",
-    "anglo-norman", "vulgar", "koine", "scottish"
-]);
+// trivial/noise patterns
+const trivialPatterns: RegExp[] = [
+    /^\?\s*\+\s*-/i,
+    /^shortening/i,
+    /^derived/i,
+    /^see/i,
+    /^unknown/i,
+    /^onomatopoeic/i,
+    /^imitative/i,
+    /^from the genus/i,
+];
 
-// counters
-const validLangs = new Map<string, number>();
-const protoLangs = new Map<string, number>();
-const noise = new Map<string, number>();
+const fromXRe = /^from\s+(.+)$/i;
 
 async function main() {
+    if (!fs.existsSync(PATH)) {
+        console.error("File not found:", PATH);
+        process.exit(1);
+    }
+
     const rl = readline.createInterface({
         input: fs.createReadStream(PATH),
-        crlfDelay: Infinity
+        crlfDelay: Infinity,
     });
 
+    const countsValid: Record<string, number> = {};
+    const countsProto: Record<string, number> = {};
+    const countsNoise: Record<string, number> = {};
+
+    const samples: { line: number; word: string; etym: string }[] = [];
+
+    let lineNo = 0;
+
     for await (const line of rl) {
-        if (!line.trim()) continue;
-        const entry = JSON.parse(line);
-        if (!entry.etymology_text) continue;
+        lineNo++;
+        const trimmed = line.trim();
+        if (!trimmed) continue;
 
-        const text = entry.etymology_text.toLowerCase();
+        let entry: AnyObj;
+        try {
+            entry = JSON.parse(trimmed);
+        } catch {
+            continue;
+        }
 
-        // crude "from X" extraction
-        const matches = [...text.matchAll(/\bfrom ([a-z\- ]+)\b/g)];
-        for (const m of matches) {
-            let raw = m[1].trim();
+        const etym = (entry.etymology_text || entry.etymology || "").trim();
+        if (!etym) continue;
 
-            // normalize
-            raw = raw.replace(/[^a-z\- ]/g, "").trim();
+        let matched = false;
 
-            // proto?
-            const proto = normalizeProto(raw);
-            if (proto) {
-                protoLangs.set(proto, (protoLangs.get(proto) ?? 0) + 1);
-                continue;
+        // trivial / noise check
+        for (const pat of trivialPatterns) {
+            if (pat.test(etym)) {
+                countsNoise[pat.source] = (countsNoise[pat.source] || 0) + 1;
+                matched = true;
+                break;
             }
+        }
+        if (matched) continue;
 
-            // valid language?
-            if (LANGUAGE_WHITELIST.has(raw)) {
-                const lang = raw.charAt(0).toUpperCase() + raw.slice(1);
-                validLangs.set(lang, (validLangs.get(lang) ?? 0) + 1);
-                continue;
+        // 'from X' detection
+        const fromMatch = etym.match(fromXRe);
+        if (fromMatch) {
+            let langRaw = fromMatch[1].toLowerCase().trim();
+            // normalize proto
+            if (protoMap[langRaw]) {
+                countsProto[protoMap[langRaw]] = (countsProto[protoMap[langRaw]] || 0) + 1;
+            } else if (validLangMap[langRaw]) {
+                countsValid[validLangMap[langRaw]] = (countsValid[validLangMap[langRaw]] || 0) + 1;
+            } else {
+                countsNoise[langRaw] = (countsNoise[langRaw] || 0) + 1;
             }
-
-            // noise?
-            if (NOISE.has(raw)) {
-                noise.set(raw, (noise.get(raw) ?? 0) + 1);
-                continue;
+            if (samples.length < SAMPLE_LIMIT) {
+                samples.push({ line: lineNo, word: entry.word, etym });
             }
+            continue;
+        }
 
-            // everything else goes into noise for now
-            noise.set(raw, (noise.get(raw) ?? 0) + 1);
+        // proto-language mentions
+        for (const [key, norm] of Object.entries(protoMap)) {
+            if (etym.toLowerCase().includes(key)) {
+                countsProto[norm] = (countsProto[norm] || 0) + 1;
+                matched = true;
+                break;
+            }
+        }
+        if (matched) continue;
+
+        // language mentions
+        for (const [code, name] of Object.entries(validLangMap)) {
+            if (etym.toLowerCase().includes(name.toLowerCase())) {
+                countsValid[name] = (countsValid[name] || 0) + 1;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            countsNoise[etym.slice(0, 20)] = (countsNoise[etym.slice(0, 20)] || 0) + 1;
+        }
+        if (samples.length < SAMPLE_LIMIT) {
+            samples.push({ line: lineNo, word: entry.word, etym });
         }
     }
 
-    // report
-    console.log("=== Valid languages ===");
-    [...validLangs.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 30)
-        .forEach(([lang, count]) =>
-            console.log(lang.padEnd(15), count.toLocaleString())
-        );
+    function sortCounts(obj: Record<string, number>) {
+        return Object.entries(obj).sort((a, b) => b[1] - a[1]);
+    }
+
+    console.log("\n=== Valid languages ===");
+    sortCounts(countsValid).forEach(([k, v]) => console.log(k.padEnd(20), v));
 
     console.log("\n=== Proto-languages ===");
-    [...protoLangs.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .forEach(([proto, count]) =>
-            console.log(proto.padEnd(25), count.toLocaleString())
-        );
+    sortCounts(countsProto).forEach(([k, v]) => console.log(k.padEnd(20), v));
 
     console.log("\n=== Noise / other ===");
-    [...noise.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 30)
-        .forEach(([word, count]) =>
-            console.log(word.padEnd(15), count.toLocaleString())
-        );
+    sortCounts(countsNoise).slice(0, 50).forEach(([k, v]) => console.log(k.padEnd(20), v));
+
+    console.log("\n=== Sample entries ===");
+    samples.forEach((s) => console.log(`Line ${s.line}: ${s.word} -> ${s.etym}`));
 }
 
-main();
+main().catch((err) => {
+    console.error("Fatal error:", err);
+    process.exit(1);
+});
