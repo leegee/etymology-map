@@ -14,22 +14,35 @@ export default function CenturySlider(props: Props) {
     };
 
     return (
-        <div class="field">
-            <label class="slider medium">
-                <input
-                    disabled={props.disabled}
-                    type="range"
-                    min={0}
-                    max={props.years.length - 1}
-                    step={1}
-                    value={props.value}
-                    onInput={handleInput}
-                />
-                <span>
-                    <i>zoom</i>
-                </span>
-            </label>
-            <span class="helper">Zoom {props.years[props.value]}</span>
+        <div class="row">
+
+            <button class="secondary small circle" onClick={() => props.onChange(Number(props.value) - 1)}>
+                <i>arrow_back</i>
+            </button>
+
+            <div class="field">
+                <label class="slider medium">
+                    <input
+                        disabled={props.disabled}
+                        type="range"
+                        min={0}
+                        max={props.years.length - 1}
+                        step={1}
+                        value={props.value}
+                        onInput={handleInput}
+                    />
+                    <span>
+                        <i>zoom</i>
+                    </span>
+                </label>
+                <span class="helper">Zoom {props.years[props.value]}</span>
+            </div>
+
+            <button class="secondary small circle" onClick={() => props.onChange(Number(props.value) + 1)}>
+                <i>arrow_forward</i>
+            </button>
         </div>
     );
 }
+
+
