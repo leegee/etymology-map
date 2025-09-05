@@ -72,6 +72,7 @@ export default function Home() {
     <>
       <nav class="bottom">
         <ZoomLevel
+          disabled={!subject().length}
           value={zoomLevel()}
           onChange={(real: number) => setZoomLevel(real)}
         />
@@ -79,12 +80,13 @@ export default function Home() {
         <WordSearch onSearch={handleSearch} />
 
         <AllCenturiesToggle
+          disabled={!subject().length}
           value={showAll()}
           onChange={setShowAll}
         />
 
         <CenturySlider
-          disabled={showAll()}
+          disabled={showAll() || !subject().length}
           years={availableYears()}
           value={sliderIndex()}
           onChange={setSliderIndex}

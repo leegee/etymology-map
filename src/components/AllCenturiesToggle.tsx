@@ -4,6 +4,7 @@ type Props = {
     value: boolean;
     onChange: (val: boolean) => void;
     label?: string;
+    disabled?: boolean;
 };
 
 const AllCenturiesToggle: Component<Props> = (props) => {
@@ -11,6 +12,7 @@ const AllCenturiesToggle: Component<Props> = (props) => {
         <div class="field small-padding top-padding">
             <label class="switch">
                 <input
+                    disabled={props.disabled}
                     type="checkbox"
                     checked={props.value}
                     onChange={e => props.onChange(e.currentTarget.checked)}

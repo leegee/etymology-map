@@ -2,6 +2,7 @@ import { Component } from "solid-js";
 
 type Props = {
     value: number;
+    disabled: boolean;
     onChange: (val: number) => void;
 };
 
@@ -10,6 +11,8 @@ const ZoomLevel: Component<Props> = (props) => {
         <div class="field">
             <label class="slider medium">
                 <input
+                    name="zoom"
+                    disabled={props.disabled}
                     type="range"
                     min="0.3"
                     max="1"
