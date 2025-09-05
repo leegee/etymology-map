@@ -10,7 +10,7 @@ type Props = {
 const AllCenturiesToggle: Component<Props> = (props) => {
     return (
         <div class="field small-padding top-padding">
-            <label class="switch">
+            <label class="switch icon">
                 <input
                     disabled={props.disabled}
                     type="checkbox"
