@@ -38,9 +38,23 @@ export default function TranslationMap(props: Props) {
     onMount(() => {
         map = new maplibregl.Map({
             container: mapContainer!,
-            style: "https://demotiles.maplibre.org/style.json",
             center: [5, 60],
             zoom: 4,
+        });
+
+        map.addSource("countries", {
+            type: "geojson",
+            data: "countries.geojson"
+        });
+
+        map.addLayer({
+            id: "countries-fill",
+            type: "fill",
+            source: "countries",
+            paint: {
+                "fill-color": "#088",
+                "fill-opacity": 0.4
+            }
         });
 
         map.getCanvas().style.cursor = "default";
@@ -56,6 +70,30 @@ export default function TranslationMap(props: Props) {
         const currentTranslations = props.translations;
 
         if (!currentSubjects.length && !currentTranslations.length) return;
+
+
+        const highlightedCountries = new Set<string>();
+
+        currentTranslations.forEach(tr => {
+            const lang = languages[tr.lang];
+            if (lang?.countryCode) highlightedCountries.add(lang.countryCode.toUpperCase());
+        });
+
+        currentSubjects.forEach(s => {
+            const lang = languages[s.lang];
+            if (lang?.countryCode) highlightedCountries.add(lang.countryCode.toUpperCase());
+        });
+
+        // Set untries fill color 
+        map.setPaintProperty("countries-fill", "fill-color", [
+            "case",
+            ["in", ["get", "iso_a2"], ["literal", Array.from(highlightedCountries)]],
+            "#f55",      // Highlighted countries in red
+            "#006400"    // Deep green for all others
+        ]);
+
+        map.setPaintProperty("countries-fill", "fill-opacity", 0.4);
+
 
         const bounds = new maplibregl.LngLatBounds();
 
