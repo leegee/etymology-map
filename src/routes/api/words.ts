@@ -29,6 +29,8 @@ export async function GET(event: APIEvent): Promise<Response> {
         word: q,
         subjectCount: subject.length,
         translationCount: translations.length,
+        subject,
+        translations: translations,
     });
 
     const response: WordsResponse = { subject, translations };
