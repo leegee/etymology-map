@@ -30,17 +30,17 @@ function lazyPrepare<T = any>(sql: string) {
     return {
         all: (...params: any[]) => {
             if (!stmt) stmt = db.prepare(sql);
-            logQuery(sql, params);
+            // logQuery(sql, params);
             return stmt?.all(...params) as T[];
         },
         get: (...params: any[]) => {
             if (!stmt) stmt = db.prepare(sql);
-            logQuery(sql, params);
+            // logQuery(sql, params);
             return stmt?.get(...params) as T;
         },
         run: (...params: any[]) => {
             if (!stmt) stmt = db.prepare(sql);
-            logQuery(sql, params);
+            // logQuery(sql, params);
             return stmt?.run(...params);
         },
     };

@@ -20,11 +20,8 @@ app.config.timestamp_*.js
 *.launch
 .settings/
 
-# Temp
-gitignore
-
-# System Files
 .DS_Store
 Thumbs.db
 data/
- public/countries.geojson 
+
+public/countries.geojson 

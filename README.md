@@ -61,6 +61,10 @@ Maybe [this](http://etym.org/) is better?
 
 Maybe `zoom` is better as `style={{ transform: `scale(${zoom()})`, transformOrigin: "top left" }}`?
 
+## Credit
+
+Static build indexes the [Google Top 10,000 Words](https://raw.githubusercontent.com/first20hours/google-10000-english/refs/heads/master/google-10000-english.txt) - minus brand names, which are sadly quite frequent.
+
 ## Test
 
 `mouse`

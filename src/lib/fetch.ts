@@ -2,12 +2,21 @@ import { logger } from "../logger";
 
 export const STATIC_BASE = "/static-data";
 
-const useStatic = true;
+export function pathForhWord(word: string): string {
+    const clean = word.replace(/[^a-z0-9]+/gi, "_").toLowerCase();
+    const dir = dirForhWord(word);
+    return `${dir}/${clean}.json`;
+}
+
+export function dirForhWord(word: string): string {
+    const clean = word.replace(/[^a-z0-9]+/gi, "_").toLowerCase();
+    const first = clean[0] ?? "_";
+    const second = clean[1] ?? "_";
+
+    return `${first}/${first}${second}/`;
+}
 
 export async function fetchJSON<T>(url: string): Promise<T> {
-
-    const fetchUrl = useStatic ? `${STATIC_BASE}${url}` : url;
-
     try {
         const res = await fetch(url);
 
@@ -16,7 +25,7 @@ export async function fetchJSON<T>(url: string): Promise<T> {
             try { body = await res.text(); } catch { }
 
             logger.error("Fetch failed", {
-                fetchUrl,
+                fetchUrl: url,
                 status: res.status,
                 statusText: res.statusText,
                 body,
@@ -25,7 +34,7 @@ export async function fetchJSON<T>(url: string): Promise<T> {
         }
 
         const data = (await res.json()) as T;
-        logger.info("Fetch successful", { fetchUrl });
+        logger.info("Fetch successful", { fetchUrl: url });
         return data;
 
     } catch (err: any) {
