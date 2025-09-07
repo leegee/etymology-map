@@ -11,6 +11,7 @@
     "test-ui": "vitest --ui",
     "db:build": "bun tsx scripts/build-db.ts",
     "db:see": "bun tsx scripts/see.ts",
+    "db:dump": "bun tsx scripts/dump.ts",
     "t": "bun tsx scripts/analyse.ts"
   },
   "type": "module",
