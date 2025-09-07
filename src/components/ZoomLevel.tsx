@@ -14,7 +14,7 @@ const ZoomLevel: Component<Props> = (props) => {
                     name="zoom"
                     disabled={props.disabled}
                     type="range"
-                    min="0.3"
+                    min="0.1"
                     max="2"
                     step="0.1"
                     value={String(props.value)}
