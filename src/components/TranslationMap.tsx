@@ -44,7 +44,7 @@ export default function TranslationMap(props: Props) {
 
         map.addSource("countries", {
             type: "geojson",
-            data: "countries.geojson"
+            data: "countries.min.geojson"
         });
 
         map.addLayer({
