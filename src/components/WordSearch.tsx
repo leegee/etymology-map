@@ -29,7 +29,7 @@ export default function WordSearch(props: Props) {
                         placeholder="Enter an English word"
                         title="Use only word characters"
                         value={value()}
-                        pattern="[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+"
+                        pattern="[\p{L}\p{N}']+"
                         onInput={e => setValue((e.target as HTMLInputElement).value)}
                         ref={inputRef}
                     />
