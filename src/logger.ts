@@ -4,15 +4,14 @@ try {
     log4js.configure({
         appenders: {
             console: { type: "console" },
-            // file: { type: "file", filename: "app.log" },
         },
         categories: {
-            default: { appenders: ["console", /* "file" */], level: "error" },
-            http: { appenders: ["console"], level: "info" },
+            default: { appenders: ["console"], level: "debug" },
+            http: { appenders: ["console"], level: "debug" },
         },
     });
 } catch (e) {
-    console.error(e);
+    console.error("Failed to configure log4js:", e);
     throw e;
 }
 
