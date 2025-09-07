@@ -3,9 +3,8 @@ import Database, { Statement } from "better-sqlite3";
 import { DB_FILE_PATH } from "./config";
 import { httpLogger } from "./logger";
 
-const DB_KEY = Symbol.for("myapp.db");
+const DB_KEY = Symbol.for("etymology-map.db");
 
-// Reuse global DB for dev hot reload
 const globalDb = (globalThis as any)[DB_KEY];
 
 export const db = globalDb ?? new Database(DB_FILE_PATH, {

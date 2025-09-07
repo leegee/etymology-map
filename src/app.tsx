@@ -8,7 +8,7 @@ export default function App() {
     <Router
       root={props => (
         <MetaProvider>
-          <Title>SolidStart - with Vitest</Title>
+          <Title>English Etymology Map</Title>
           <Suspense>{props.children}</Suspense>
         </MetaProvider>
       )}
