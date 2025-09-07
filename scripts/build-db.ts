@@ -85,7 +85,8 @@ function safeValue(val: any): string | number | null {
 const db = new Database(DB_FILE_PATH);
 
 db.exec(`
-CREATE TABLE IF NOT EXISTS words (
+DROP TABLE IF EXISTS words;
+CREATE TABLE words (
   id INTEGER PRIMARY KEY,
   word TEXT NOT NULL,
   lang TEXT NOT NULL,
@@ -95,7 +96,8 @@ CREATE TABLE IF NOT EXISTS words (
   year_end INTEGER
 );
 
-CREATE TABLE IF NOT EXISTS translations (
+DROP TABLE IF EXISTS translations;
+CREATE TABLE (
   id INTEGER PRIMARY KEY,
   word_id INTEGER NOT NULL REFERENCES words(id),
   translation TEXT NOT NULL,
@@ -148,6 +150,9 @@ const insertBatch = db.transaction((entries: any[]) => {
         (entry.translations || []).forEach((tr: any) => {
             const trLangRaw = safeValue(tr.lang_code?.trim().toLowerCase().replace(/\s+/g, "") || "??");
             const trLang = langMap[trLangRaw as string] || trLangRaw as string;
+
+            if (!trLang) return; // skip unknown translation languages
+
             const word = safeValue(tr.word);
             if (!word) { skippedEmpty++; return; }
 

@@ -9,6 +9,7 @@ import CenturySlider from "~/components/CenturySlider";
 import AllCenturiesToggle from "~/components/AllCenturiesToggle";
 import { normalizeWords } from "~/lib/normalizeWords";
 import ZoomLevel from "~/components/ZoomLevel";
+import { fetchJSON } from "~/lib/fetch";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
@@ -47,12 +48,10 @@ export default function Home() {
   });
 
   const handleSearch = async (word: string) => {
-    const res = await fetch(`/api/words?word=${encodeURIComponent(word)}`);
-    if (!res.ok) return;
-    const data = (await res.json()) as WordsResponse;
+    const data = await fetchJSON<WordsResponse>(word);
     const translations = normalizeWords(data.translations);
-    setSubject(data.subject as SubjectDefinition[]);
-    setTranslations(translations as Translation[]);
+    setSubject(data.subject);
+    setTranslations(translations);
   };
 
   const filteredTranslations = createMemo(() =>
