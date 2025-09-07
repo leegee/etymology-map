@@ -1,6 +1,7 @@
 {
   "name": "etymology-map",
   "description": "Mapping English word etymology",
+  "version": "0.0.2",
   "scripts": {
     "dev": "vinxi dev",
     "build": "vinxi build",
@@ -34,9 +35,11 @@
     "vitest": "3.0.5"
   },
   "dependencies": {
+    "@types/log4js": "^2.3.5",
     "beercss": "^3.11.33",
     "better-sqlite3": "^12.2.0",
     "flag-icons": "^7.5.0",
+    "log4js": "^6.9.1",
     "maplibre-gl": "^5.7.0"
   }
 }

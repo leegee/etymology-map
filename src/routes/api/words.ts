@@ -1,7 +1,7 @@
 import type { APIEvent } from "@solidjs/start/server";
-import Database from "better-sqlite3";
-import { DB_FILE_PATH } from "../../config";
 import type { Translation, SubjectDefinition } from "~/types";
+import { httpLogger } from "~/logger";
+import { stmtFindExact, stmtFindPrefix, stmtFindTranslations } from "~/db";
 
 export type WordsResponse = {
     subject: SubjectDefinition[];
@@ -12,26 +12,24 @@ export async function GET(event: APIEvent): Promise<Response> {
     const url = new URL(event.request.url);
     const q = (url.searchParams.get("word") ?? "").trim();
 
-    const db = new Database(DB_FILE_PATH, { readonly: true });
-
     // Exact match first
-    let subject = db
-        .prepare("SELECT * FROM words WHERE LOWER(word) = LOWER(?) LIMIT 1")
-        .all(q) as SubjectDefinition[];
+    let subject = stmtFindExact.all(q) as SubjectDefinition[];
 
     // Fallback to prefix search
     if (subject.length === 0) {
-        subject = db
-            .prepare("SELECT * FROM words WHERE LOWER(word) LIKE LOWER(?) LIMIT 50")
-            .all(`${q}%`) as SubjectDefinition[];
+        subject = stmtFindPrefix.all(`${q}%`) as SubjectDefinition[];
     }
 
     // Look up translations for each word
     const translations: Translation[] = subject.flatMap((w) =>
-        db.prepare("SELECT * FROM translations WHERE word_id = ?").all(w.id) as Translation[]
+        stmtFindTranslations.all(w.id) as Translation[]
     );
 
-    db.close();
+    httpLogger.debug({
+        word: q,
+        subjectCount: subject.length,
+        translationCount: translations.length,
+    });
 
     const response: WordsResponse = { subject, translations };
 

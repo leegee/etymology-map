@@ -1,0 +1,7 @@
+0.0.2 Sunday 7 Sept 2025 
+
+Logging; prepared statements
+
+0.0.1 Friday 5 Sept 2025 
+
+Init
