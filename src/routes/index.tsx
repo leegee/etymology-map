@@ -48,7 +48,7 @@ export default function Home() {
   });
 
   const handleSearch = async (word: string) => {
-    const data = await fetchJSON<WordsResponse>(word);
+    const data = await fetchJSON<WordsResponse>(`/api/words?word=${encodeURIComponent(word)}`);
     const translations = normalizeWords(data.translations);
     setSubject(data.subject);
     setTranslations(translations);
