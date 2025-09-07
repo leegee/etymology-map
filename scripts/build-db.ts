@@ -34,16 +34,14 @@ const langMap: Record<string, string> = {
     moderngreek: "el",
     coptic: "cop",
     egyptian: "egy",
-    "proto": "pie",
+    proto: "pie",
     "proto-indo-european": "pie",
     "proto-germanic": "pgm",
 };
 
-// helper: detect etymology-only languages from text
 function detectEtymologyLang(etymologyText?: string): string | null {
     if (!etymologyText) return null;
     const text = etymologyText.toLowerCase();
-
     for (const [key, code] of Object.entries(langMap)) {
         if (text.includes(key)) return code;
     }
@@ -54,15 +52,9 @@ function parseYears(etymologyText?: string, langCode?: string): [number | null, 
     if (!etymologyText && !langCode) return [null, null];
 
     const match = etymologyText?.match(/c\.?\s*(\d{3,4})/);
-    if (match) {
-        const y = parseInt(match[1]);
-        return [y, y];
-    }
+    if (match) return [parseInt(match[1]), parseInt(match[1])];
 
-    if (langCode && languages[langCode]?.yearRange) {
-        const r = languages[langCode].yearRange;
-        return [r[0], r[1]];
-    }
+    if (langCode && languages[langCode]?.yearRange) return [...languages[langCode].yearRange];
 
     if (etymologyText) {
         const t = etymologyText.toLowerCase();
@@ -74,7 +66,6 @@ function parseYears(etymologyText?: string, langCode?: string): [number | null, 
     return [null, null];
 }
 
-// make sure all values are SQLite-safe
 function safeValue(val: any): string | number | null {
     if (val === undefined || val === null) return null;
     if (typeof val === "string" || typeof val === "number") return val;
@@ -82,10 +73,15 @@ function safeValue(val: any): string | number | null {
     return JSON.stringify(val);
 }
 
+console.log('Dropping ', DB_FILE_PATH);
+
+if (fs.existsSync(DB_FILE_PATH)) fs.unlinkSync(DB_FILE_PATH);
+
+console.log('Connecting to', DB_FILE_PATH);
 const db = new Database(DB_FILE_PATH);
+console.log('Connected to', DB_FILE_PATH);
 
 db.exec(`
-DROP TABLE IF EXISTS words;
 CREATE TABLE words (
   id INTEGER PRIMARY KEY,
   word TEXT NOT NULL,
@@ -96,8 +92,7 @@ CREATE TABLE words (
   year_end INTEGER
 );
 
-DROP TABLE IF EXISTS translations;
-CREATE TABLE (
+CREATE TABLE translations (
   id INTEGER PRIMARY KEY,
   word_id INTEGER NOT NULL REFERENCES words(id),
   translation TEXT NOT NULL,
@@ -106,12 +101,12 @@ CREATE TABLE (
   year_end INTEGER
 );
 `);
+console.log('Created tables');
 
 const insertWord = db.prepare(`
   INSERT INTO words (word, lang, pos, etymology, year_start, year_end)
   VALUES (?, ?, ?, ?, ?, ?)
 `);
-
 const insertTrans = db.prepare(`
   INSERT INTO translations (word_id, translation, lang, year_start, year_end)
   VALUES (?, ?, ?, ?, ?)
@@ -151,7 +146,7 @@ const insertBatch = db.transaction((entries: any[]) => {
             const trLangRaw = safeValue(tr.lang_code?.trim().toLowerCase().replace(/\s+/g, "") || "??");
             const trLang = langMap[trLangRaw as string] || trLangRaw as string;
 
-            if (!trLang) return; // skip unknown translation languages
+            if (!trLang) return;
 
             const word = safeValue(tr.word);
             if (!word) { skippedEmpty++; return; }
@@ -169,6 +164,9 @@ const insertBatch = db.transaction((entries: any[]) => {
             if (!usedLangs.has(trLang)) usedLangs.set(trLang, { words: 0, translations: 0 });
             usedLangs.get(trLang)!.translations++;
         });
+
+        if (wordsInserted % 1000 === 0) console.log(`Inserted ${wordsInserted} words so far...`);
+        if (translationsInserted > 0 && translationsInserted % 5000 === 0) console.log(`Inserted ${translationsInserted} translations so far...`);
     }
 
     return { wordsInserted, translationsInserted, skippedEmpty };
@@ -185,8 +183,12 @@ async function main() {
     let totalWords = 0;
     let totalTranslations = 0;
     let totalSkippedEmpty = 0;
+    let linesProcessed = 0;
 
     for await (const line of rl) {
+        linesProcessed++;
+        if (linesProcessed % 1000 === 0) console.log(`Read ${linesProcessed} lines...`);
+
         try {
             const entry = JSON.parse(line);
             if (targetPOS.length && !targetPOS.includes(entry.pos)) continue;
@@ -197,6 +199,7 @@ async function main() {
                 totalWords += res.wordsInserted;
                 totalTranslations += res.translationsInserted;
                 totalSkippedEmpty += res.skippedEmpty;
+                console.log(`Batch inserted: ${res.wordsInserted} words, ${res.translationsInserted} translations, skipped ${res.skippedEmpty} empty`);
                 batch = [];
             }
         } catch (err) {
@@ -209,6 +212,7 @@ async function main() {
         totalWords += res.wordsInserted;
         totalTranslations += res.translationsInserted;
         totalSkippedEmpty += res.skippedEmpty;
+        console.log(`Final batch inserted: ${res.wordsInserted} words, ${res.translationsInserted} translations, skipped ${res.skippedEmpty} empty`);
     }
 
     db.prepare(`VACUUM;`).run();
@@ -223,7 +227,6 @@ async function main() {
         console.log(`${lang}: ${counts.words} words, ${counts.translations} translations`);
     });
 
-    // --- Additional counts from DB ---
     const wordCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM words`).get() as { cnt: number }).cnt;
     const transCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM translations`).get() as { cnt: number }).cnt;
 
