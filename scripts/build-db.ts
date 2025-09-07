@@ -43,6 +43,8 @@ function getYearRange(etymologyText?: string, langCode?: string): [number | null
 
     if (langCode && languages[langCode]?.yearRange) {
         return languages[langCode].yearRange;
+    } else {
+        console.log('no for', langCode)
     }
 
     return [null, null];
@@ -159,7 +161,7 @@ const insertBatch = db.transaction((entries: any[]) => {
                 return;
             }
 
-            const [yearStart, yearEnd] = getYearRange(trLang, tr.etymology_text);
+            const [yearStart, yearEnd] = getYearRange(tr.etymology_text, trLang);
 
             insertTrans.run(
                 wordId,
