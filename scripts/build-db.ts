@@ -6,39 +6,20 @@ import { languages } from "../src/lib/langs";
 
 const targetPOS: string[] = []; // ["noun", "verb"]
 
-// normalize word language names to ISO codes
 const langMap: Record<string, string> = {
-    english: "en",
-    german: "de",
-    dutch: "nl",
-    olddutch: "nl",
-    swedish: "sv",
-    norwegian: "nn",
-    danish: "da",
-    icelandic: "is",
-    faroese: "fo",
-    afrikaans: "af",
-    yiddish: "yi",
-    oldenglish: "ang",
-    oldhighgerman: "ohg",
-    oldnorse: "non",
-    gothic: "got",
-    lowgerman: "nds",
-    frisian: "fry",
-    northfrisian: "frr",
-    eastfrisian: "frs",
-    limburgish: "li",
-    latin: "la",
-    latelate: "lla",
-    ancientgreek: "grc",
-    moderngreek: "el",
-    coptic: "cop",
-    egyptian: "egy",
-    proto: "pie",
-    "proto-indo-european": "pie",
-    "proto-germanic": "pgm",
+    english: "en", german: "de", dutch: "nl", olddutch: "nl",
+    swedish: "sv", norwegian: "nn", danish: "da", icelandic: "is",
+    faroese: "fo", afrikaans: "af", yiddish: "yi",
+    oldenglish: "ang", oldhighgerman: "ohg", oldnorse: "non",
+    gothic: "got", lowgerman: "nds", frisian: "fry",
+    northfrisian: "frr", eastfrisian: "frs", limburgish: "li",
+    latin: "la", latelate: "lla", ancientgreek: "grc",
+    moderngreek: "el", coptic: "cop", egyptian: "egy",
+    proto: "pie", "proto-indo-european": "pie", "proto-germanic": "pgm",
+    "proto-west-germanic": "pgw",
 };
 
+// Detects language from etymology text
 function detectEtymologyLang(etymologyText?: string): string | null {
     if (!etymologyText) return null;
     const text = etymologyText.toLowerCase();
@@ -48,21 +29,18 @@ function detectEtymologyLang(etymologyText?: string): string | null {
     return null;
 }
 
+// Parse approximate year range
 function parseYears(etymologyText?: string, langCode?: string): [number | null, number | null] {
     if (!etymologyText && !langCode) return [null, null];
-
     const match = etymologyText?.match(/c\.?\s*(\d{3,4})/);
     if (match) return [parseInt(match[1]), parseInt(match[1])];
-
     if (langCode && languages[langCode]?.yearRange) return [...languages[langCode].yearRange];
-
     if (etymologyText) {
         const t = etymologyText.toLowerCase();
         if (t.includes("old english")) return [700, 1100];
         if (t.includes("middle english")) return [1100, 1500];
         if (t.includes("modern english")) return [1500, 9999];
     }
-
     return [null, null];
 }
 
@@ -73,13 +51,9 @@ function safeValue(val: any): string | number | null {
     return JSON.stringify(val);
 }
 
-console.log('Dropping ', DB_FILE_PATH);
-
+// Reset DB
 if (fs.existsSync(DB_FILE_PATH)) fs.unlinkSync(DB_FILE_PATH);
-
-console.log('Connecting to', DB_FILE_PATH);
 const db = new Database(DB_FILE_PATH);
-console.log('Connected to', DB_FILE_PATH);
 
 db.exec(`
 CREATE TABLE words (
@@ -91,7 +65,6 @@ CREATE TABLE words (
   year_start INTEGER,
   year_end INTEGER
 );
-
 CREATE TABLE translations (
   id INTEGER PRIMARY KEY,
   word_id INTEGER NOT NULL REFERENCES words(id),
@@ -100,23 +73,32 @@ CREATE TABLE translations (
   year_start INTEGER,
   year_end INTEGER
 );
-`);
-console.log('Created tables');
-
-const insertWord = db.prepare(`
-  INSERT INTO words (word, lang, pos, etymology, year_start, year_end)
-  VALUES (?, ?, ?, ?, ?, ?)
-`);
-const insertTrans = db.prepare(`
-  INSERT INTO translations (word_id, translation, lang, year_start, year_end)
-  VALUES (?, ?, ?, ?, ?)
+CREATE TABLE IF NOT EXISTS cognates (
+  id INTEGER PRIMARY KEY,
+  word_id INTEGER NOT NULL REFERENCES words(id),
+  cognate TEXT NOT NULL,
+  lang TEXT NOT NULL
+);
 `);
 
+const insertWord = db.prepare(`INSERT INTO words (word, lang, pos, etymology, year_start, year_end) VALUES (?, ?, ?, ?, ?, ?)`);
+const insertTrans = db.prepare(`INSERT INTO translations (word_id, translation, lang, year_start, year_end) VALUES (?, ?, ?, ?, ?)`);
+const insertCognate = db.prepare(`INSERT INTO cognates (word_id, cognate, lang) VALUES (?, ?, ?)`);
 const usedLangs = new Map<string, { words: number; translations: number }>();
+
+const englishChain = new Set([
+    'en', 'enm', 'ang', 'non', 'pgw', 'pgm',
+    'fry', 'frs', 'frr', 'nds', 'ohg', 'nl', 'olddutch',
+    'la', 'lla', 'vl', // Latin & Vulgar Latin
+    'grc', 'el',       // Greek
+    'fro', 'fr',       // French
+    'pie',             // Proto-Indo-European
+]);
 
 const insertBatch = db.transaction((entries: any[]) => {
     let wordsInserted = 0;
     let translationsInserted = 0;
+    let cognatesInserted = 0;
     let skippedEmpty = 0;
 
     for (const entry of entries) {
@@ -142,25 +124,45 @@ const insertBatch = db.transaction((entries: any[]) => {
         const wordId = info.lastInsertRowid;
         wordsInserted++;
 
+        // Extract cognates
+        if (entry.etymology_text?.includes("Cognates")) {
+            const cognateSection = entry.etymology_text.split("Cognates")[1];
+            const matches = cognateSection.match(/([A-Za-z\u00C0-\u024F\u0370-\u03FF\u0400-\u04FF’'’-]+),?/g);
+            if (matches) {
+                matches.forEach((cog: string) => {
+                    const cogTrim = cog.trim();
+                    if (cogTrim) {
+                        insertCognate.run(wordId, cogTrim, '??'); // Language unknown
+                        cognatesInserted++;
+                    }
+                });
+            }
+        }
+
+        // English etymology chain
         (entry.translations || []).forEach((tr: any) => {
-            const trLangRaw = safeValue(tr.lang_code?.trim().toLowerCase().replace(/\s+/g, "") || "??");
+            const trWord = safeValue(tr.word);
+            if (!trWord) {
+                skippedEmpty++;
+                return;
+            }
+
+            const trLangRaw = safeValue(tr.lang_code?.trim().toLowerCase() || "??");
             const trLang = langMap[trLangRaw as string] || trLangRaw as string;
 
-            if (!trLang) return;
+            if (!englishChain.has(trLang)) {
+                skippedEmpty++;
+                return;
+            }
 
-            const word = safeValue(tr.word);
-            if (!word) { skippedEmpty++; return; }
-
-            const [trStart, trEnd] = parseYears(tr.etymology_text, trLang);
             insertTrans.run(
-                safeValue(wordId),
-                word,
+                wordId,
+                trWord,
                 safeValue(trLang),
-                safeValue(trStart),
-                safeValue(trEnd)
+                ...parseYears(tr.etymology_text, trLang)
             );
-            translationsInserted++;
 
+            translationsInserted++;
             if (!usedLangs.has(trLang)) usedLangs.set(trLang, { words: 0, translations: 0 });
             usedLangs.get(trLang)!.translations++;
         });
@@ -169,8 +171,9 @@ const insertBatch = db.transaction((entries: any[]) => {
         if (translationsInserted > 0 && translationsInserted % 5000 === 0) console.log(`Inserted ${translationsInserted} translations so far...`);
     }
 
-    return { wordsInserted, translationsInserted, skippedEmpty };
+    return { wordsInserted, translationsInserted, cognatesInserted, skippedEmpty };
 });
+
 
 async function main() {
     const rl = readline.createInterface({
@@ -199,7 +202,7 @@ async function main() {
                 totalWords += res.wordsInserted;
                 totalTranslations += res.translationsInserted;
                 totalSkippedEmpty += res.skippedEmpty;
-                console.log(`Batch inserted: ${res.wordsInserted} words, ${res.translationsInserted} translations, skipped ${res.skippedEmpty} empty`);
+                console.log(`Batch inserted: ${res.wordsInserted} words, ${res.translationsInserted} translations, skipped ${res.skippedEmpty} unrelated`);
                 batch = [];
             }
         } catch (err) {
@@ -212,7 +215,7 @@ async function main() {
         totalWords += res.wordsInserted;
         totalTranslations += res.translationsInserted;
         totalSkippedEmpty += res.skippedEmpty;
-        console.log(`Final batch inserted: ${res.wordsInserted} words, ${res.translationsInserted} translations, skipped ${res.skippedEmpty} empty`);
+        console.log(`Final batch inserted: ${res.wordsInserted} words, ${res.translationsInserted} translations, skipped ${res.skippedEmpty} unrelated`);
     }
 
     db.prepare(`VACUUM;`).run();
@@ -221,7 +224,7 @@ async function main() {
     console.log("=== Import summary ===");
     console.log(`Total words inserted: ${totalWords}`);
     console.log(`Total translations inserted: ${totalTranslations}`);
-    console.log(`Skipped empty translations: ${totalSkippedEmpty}`);
+    console.log(`Skipped unrelated translations: ${totalSkippedEmpty}`);
     console.log("\nLanguages used in this import:");
     Array.from(usedLangs).sort().forEach(([lang, counts]) => {
         console.log(`${lang}: ${counts.words} words, ${counts.translations} translations`);
@@ -229,12 +232,12 @@ async function main() {
 
     const wordCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM words`).get() as { cnt: number }).cnt;
     const transCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM translations`).get() as { cnt: number }).cnt;
+    const cognateCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM cognates`).get() as { cnt: number }).cnt;
 
     console.log("\n=== Verification counts from DB ===");
     console.log(`Words table count: ${wordCount}`);
     console.log(`Translations table count: ${transCount}`);
+    console.log(`Cognates table count: ${cognateCount}`);
 }
 
-main().catch(err => {
-    console.error("Fatal error:", err);
-});
+main().catch(err => console.error("Fatal error:", err));
