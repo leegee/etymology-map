@@ -29,8 +29,7 @@ function detectEtymologyLang(etymologyText?: string): string | null {
     return null;
 }
 
-// Parse approximate year range
-function parseYears(etymologyText?: string, langCode?: string): [number | null, number | null] {
+function getYearRange(etymologyText?: string, langCode?: string): [number | null, number | null] {
     if (!etymologyText && !langCode) return [null, null];
     const match = etymologyText?.match(/c\.?\s*(\d{3,4})/);
     if (match) return [parseInt(match[1]), parseInt(match[1])];
@@ -41,6 +40,11 @@ function parseYears(etymologyText?: string, langCode?: string): [number | null, 
         if (t.includes("middle english")) return [1100, 1500];
         if (t.includes("modern english")) return [1500, 9999];
     }
+
+    if (langCode && languages[langCode]?.yearRange) {
+        return languages[langCode].yearRange;
+    }
+
     return [null, null];
 }
 
@@ -108,7 +112,7 @@ const insertBatch = db.transaction((entries: any[]) => {
         const etyLang = detectEtymologyLang(entry.etymology_text);
         if (etyLang) isoLang = etyLang;
 
-        const [yearStart, yearEnd] = parseYears(entry.etymology_text, isoLang);
+        const [yearStart, yearEnd] = getYearRange(entry.etymology_text, isoLang);
 
         if (!usedLangs.has(isoLang)) usedLangs.set(isoLang, { words: 0, translations: 0 });
         usedLangs.get(isoLang)!.words++;
@@ -155,11 +159,13 @@ const insertBatch = db.transaction((entries: any[]) => {
                 return;
             }
 
+            const [yearStart, yearEnd] = getYearRange(trLang, tr.etymology_text);
+
             insertTrans.run(
                 wordId,
                 trWord,
                 safeValue(trLang),
-                ...parseYears(tr.etymology_text, trLang)
+                yearStart, yearEnd
             );
 
             translationsInserted++;

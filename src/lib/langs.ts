@@ -379,6 +379,11 @@ export const languages: Record<string, {
     zh: { flag: "🇨🇳", englishName: "Chinese", nativeName: "中文", coords: [35.8617, 104.1954], countryCode: "cn", yearRange: [1000, 9999] },
     zu: { flag: "🇿🇦", englishName: "Zulu", nativeName: "isiZulu", coords: [-29.0, 31.0], countryCode: "za", yearRange: [1400, 9999] },
     zza: { flag: "🇹🇷", englishName: "Zazaki", nativeName: "Zazaki", coords: [38.0, 40.0], countryCode: "tr", yearRange: [1300, 9999] },
+
+    gmh: { flag: "🇩🇪", englishName: "Middle High German", nativeName: "Mittelhochdeutsch", coords: [51.1657, 10.4515], countryCode: "de", yearRange: [1050, 1350] },
+    odt: { flag: "🇳🇱", englishName: "Old Dutch", nativeName: "Oudnederlands", coords: [52.1326, 5.2913], countryCode: "nl", yearRange: [500, 1150] },
+    pro: { flag: "🇪🇸", englishName: "Proto-Indo-European", nativeName: "—", coords: [47, 30], countryCode: "??", yearRange: [-4500, -2500] },
+
 }
 
 /*
