@@ -78,11 +78,8 @@ export default function App() {
     <>
       <Portal mount={document.body}>
         <div id="welcome-snackbar" class="snackbar primary max center-align">
-
           <div class="max">Enter a word for which to search; click a word for more details.</div>
-          <a class="inverse-link">
-            <i>close</i>
-          </a>
+          <a class="inverse-link"><i>close</i></a>
         </div>
 
         <div id="error-snackbar" class="snackbar error max center-align">The word "{searchTerm()}" is not in the list supported by this version.</div>

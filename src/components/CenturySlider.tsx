@@ -1,4 +1,5 @@
 import { createSignal, createEffect } from "solid-js";
+import { yearLabel } from "~/lib/year-label";
 
 type Props = {
     disabled: boolean;
@@ -16,10 +17,6 @@ export default function CenturySlider(props: Props) {
     const changeValue = (v: number) => {
         const newValue = Number(props.value) + v;
         if (newValue >= 0 && newValue < props.years.length) props.onChange(newValue);
-    }
-
-    const yearLabel = (year: number): string => {
-        return 'c ' + year + ' C ' + (year >= 0 ? 'AD' : 'BC')
     }
 
     return (

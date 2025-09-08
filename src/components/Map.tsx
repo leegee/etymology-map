@@ -6,6 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import styles from "./Map.module.css";
 import { languages } from "../lib/langs";
 import type { Translation, SubjectDefinition } from "../types";
+import { yearLabel } from "~/lib/year-label";
 
 // Don't include in zoom-to-bounds, as it skews the lovely northern map view
 const IGNORE_SOUTH_AFRICA = true;
@@ -42,6 +43,11 @@ export default function TranslationMap(props: Props) {
             container: mapContainer!,
             center: [5, 60],
             zoom: 4,
+            dragPan: true,
+            dragRotate: true,
+            scrollZoom: true,
+            doubleClickZoom: true,
+            touchZoomRotate: true,
         });
 
         map.addSource("countries", {
@@ -143,7 +149,11 @@ export default function TranslationMap(props: Props) {
                                         <For each={trs}>
                                             {(tr) => (
                                                 <tr>
-                                                    <th class="top-align">{tr.year_start ?? ""}–{tr.year_end ?? ""}</th>
+                                                    <th class="top-align">
+                                                        {yearLabel(tr.year_start)}
+                                                        –
+                                                        {yearLabel(tr.year_end)}
+                                                    </th>
                                                     <td>
                                                         <a title="View on Wiktionary" class="large" target="blank" href={`https://en.wiktionary.org/wiki/${tr.translation}#${lang.englishName}`}>
                                                             {tr.translation}
@@ -212,7 +222,15 @@ export default function TranslationMap(props: Props) {
             });
 
 
-            if (props.translations.length && !bounds.isEmpty()) map.fitBounds(bounds, { padding: 100 });
+            if (props.translations.length && !bounds.isEmpty()) {
+                // map.fitBounds(bounds, { padding: 100 });
+                map.fitBounds(bounds, {
+                    padding: 100,
+                    duration: 1400,
+                    easing: (t) => t * (2 - t),
+                });
+
+            }
         }
     });
 
