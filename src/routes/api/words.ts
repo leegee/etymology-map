@@ -25,13 +25,13 @@ export async function GET(event: APIEvent): Promise<Response> {
         stmtFindTranslations.all(w.id) as Translation[]
     );
 
-    httpLogger.debug({
-        word: q,
-        subjectCount: subject.length,
-        translationCount: translations.length,
-        subject,
-        translations: translations,
-    });
+    // httpLogger.debug({
+    //     word: q,
+    //     subjectCount: subject.length,
+    //     translationCount: translations.length,
+    //     subject,
+    //     translations: translations,
+    // });
 
     const response: WordsResponse = { subject, translations };
 
