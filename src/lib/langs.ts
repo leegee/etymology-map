@@ -1,11 +1,33 @@
-export const languages: Record<string, {
+import { logger } from "~/logger";
+
+export type Language = {
     flag: string;
     englishName: string;
     nativeName: string;
     coords: [number, number];
     countryCode: string;
     yearRange: [number, number];
-}> = {
+};
+
+export const getLanguage = (langCode: string): Language => {
+    const lang = languages[langCode];
+    if (!lang) {
+        logger.warn('No language entry for code ' + lang);
+        return {
+            flag: '',
+            englishName: langCode,
+            nativeName: langCode,
+            coords: [0, 0],
+            countryCode: langCode,
+            yearRange: [0, 0]
+        };
+    }
+    if (lang.yearRange[0] === 9999) lang.yearRange[0] = new Date().getFullYear();
+    if (lang.yearRange[1] === 9999) lang.yearRange[0] = new Date().getFullYear();
+    return lang;
+}
+
+export const languages: Record<string, Language> = {
     en: { flag: "🇬🇧", englishName: "English", nativeName: "English", coords: [51.5074, -2], countryCode: "gb", yearRange: [1500, 9999] },
     de: { flag: "🇩🇪", englishName: "German", nativeName: "Deutsch", coords: [51.1657, 10.4515], countryCode: "de", yearRange: [1050, 9999] },
     nl: { flag: "🇳🇱", englishName: "Dutch", nativeName: "Nederlands", coords: [52.1326, 5.2913], countryCode: "nl", yearRange: [1100, 9999] },
