@@ -1,4 +1,4 @@
-import { createSignal, createMemo } from "solid-js";
+import { createSignal, createMemo, onMount } from "solid-js";
 import { Translation, SubjectDefinition } from "./types";
 import WordSearch from "./components/WordSearch";
 import TranslationMap from "./components/Map";
@@ -33,7 +33,6 @@ export default function App() {
     });
 
     const rv = Array.from(set).sort((a, b) => a - b);
-    // console.log('Years available', rv)
     return rv;
   });
 
@@ -50,8 +49,8 @@ export default function App() {
     const data = await fetchWords(q);
 
     if (data.translations.length === 0) {
-      ui("#snackbar");
-      setTimeout(() => ui("#snackbar", 0), 2000);
+      ui("#error-snackbar");
+      setTimeout(() => ui("#error-snackbar", 0), 2_000);
     }
 
     setSubject(data.subject);
@@ -67,10 +66,23 @@ export default function App() {
     })
   );
 
+  onMount(() => {
+    ui("#welcome-snackbar");
+    setTimeout(() => ui("#welcome-snackbar", 0), 10_000);
+  });
+
   return (
     <>
       <Portal mount={document.body}>
-        <div class="snackbar error center-align" id="snackbar">The word "{searchTerm()}" is not in the list supported by this version.</div>
+        <div id="welcome-snackbar" class="snackbar primary max center-align">
+
+          <div class="max">Enter a word for which to search.</div>
+          <a class="inverse-link">
+            <i>close</i>
+          </a>
+        </div>
+
+        <div id="error-snackbar" class="snackbar error max center-align">The word "{searchTerm()}" is not in the list supported by this version.</div>
       </Portal>
 
       <nav class="bottom">
