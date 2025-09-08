@@ -104,16 +104,19 @@ const insertBatch = db.transaction((entries: any[]) => {
 
     for (const entry of entries) {
         const wordLower = (entry.word || "").toLowerCase();
-        if (!allowedWords.has(wordLower)) continue; // skip if not in subject words
+        if (!allowedWords.has(wordLower)) continue; // skip if not in allowed words
 
+        // Determine subject language
         const rawLang = safeValue(entry.lang?.trim().toLowerCase().replace(/\s+/g, "") || "english");
         const isoLang = Object.keys(languages).find(
             code => languages[code].englishName.toLowerCase() === rawLang
         ) || "en";
 
+        // Track used languages
         if (!usedLangs.has(isoLang)) usedLangs.set(isoLang, { words: 0, translations: 0 });
         usedLangs.get(isoLang)!.words++;
 
+        // Insert the subject word
         const info = insertWord.run(
             safeValue(entry.word),
             isoLang,
@@ -123,6 +126,7 @@ const insertBatch = db.transaction((entries: any[]) => {
         const wordId = info.lastInsertRowid;
         wordsInserted++;
 
+        // Insert cognates if any
         if (entry.etymology_text?.includes("Cognates")) {
             const cognateSection = entry.etymology_text.split("Cognates")[1];
             const matches = cognateSection.match(/([A-Za-z\u00C0-\u024F\u0370-\u03FF\u0400-\u04FF’'’-]+),?/g);
@@ -137,10 +141,19 @@ const insertBatch = db.transaction((entries: any[]) => {
             }
         }
 
+        // Parse etymology stages
         const stages = parseEtymology(entry.etymology_text);
+
+        // Create a set of subject languages to filter translations
+        const subjectLangs = new Set([isoLang]);
+
         stages.forEach(stage => {
+            // Skip translations that match the subject language
+            if (subjectLangs.has(stage.lang)) return;
+
             insertTrans.run(wordId, stage.word, stage.lang);
             translationsInserted++;
+
             if (!usedLangs.has(stage.lang)) usedLangs.set(stage.lang, { words: 0, translations: 0 });
             usedLangs.get(stage.lang)!.translations++;
         });
@@ -148,6 +161,7 @@ const insertBatch = db.transaction((entries: any[]) => {
 
     return { wordsInserted, translationsInserted, cognatesInserted };
 });
+
 
 async function main() {
     const rl = readline.createInterface({
