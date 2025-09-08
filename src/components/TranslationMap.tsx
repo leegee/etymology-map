@@ -54,8 +54,8 @@ export default function TranslationMap(props: Props) {
             type: "fill",
             source: "countries",
             paint: {
-                "fill-color": "#088",
-                "fill-opacity": 0.4
+                "fill-color": "#088", // Initial colour
+                "fill-opacity": 0.2
             }
         });
 
@@ -91,8 +91,8 @@ export default function TranslationMap(props: Props) {
         map.setPaintProperty("countries-fill", "fill-color", [
             "case",
             ["in", ["get", "iso_a2"], ["literal", Array.from(highlightedCountries)]],
-            "#f55",      // Highlighted countries in red
-            "#006400"    // Deep green for all others
+            "#5f5",
+            "#006400"
         ]);
 
         map.setPaintProperty("countries-fill", "fill-opacity", 0.4);
