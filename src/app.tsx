@@ -6,12 +6,14 @@ import CenturySlider from "./components/CenturySlider";
 import AllCenturiesToggle from "./components/AllCenturiesToggle";
 import ZoomLevel from "./components/ZoomLevel";
 import { fetchWords } from "./lib/fetch";
+import { Portal } from "solid-js/web";
 
 export default function App() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
   const [subject, setSubject] = createSignal<SubjectDefinition[]>([]);
   const [showAll, setShowAll] = createSignal(true);
   const [zoomLevel, setZoomLevel] = createSignal(0.75);
+  const [searchTerm, setSearchTerm] = createSignal('');
 
   const currentYear = new Date().getFullYear();
 
@@ -43,10 +45,14 @@ export default function App() {
     return [year, year];
   });
 
-  const handleSearch = async (word: string) => {
-    const data = await fetchWords(word);
+  const handleSearch = async (q: string) => {
+    setSearchTerm(q);
+    const data = await fetchWords(q);
 
-    console.log(data.subject);
+    if (data.translations.length === 0) {
+      ui("#snackbar");
+      setTimeout(() => ui("#snackbar", 0), 2000);
+    }
 
     setSubject(data.subject);
     setTranslations(data.translations);
@@ -61,14 +67,12 @@ export default function App() {
     })
   );
 
-  // createEffect(() => {
-  //   console.log("dateRange", dateRange());
-  //   console.log("showAll", showAll());
-  //   console.log("filtered translations", filteredTranslations());
-  // });
-
   return (
     <>
+      <Portal mount={document.body}>
+        <div class="snackbar error center-align" id="snackbar">The word "{searchTerm()}" is not in the list supported by this version.</div>
+      </Portal>
+
       <nav class="bottom">
         <ZoomLevel
           disabled={!subject().length}
