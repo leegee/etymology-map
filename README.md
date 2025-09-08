@@ -22,6 +22,8 @@ Uses `sql.js` to host a database of [Google Top 10,000 Words](https://raw.github
 
 The original branch uses the Solid-Start library, `better-sqlite3`, and is now named `with-server`.
 
+The build/exploration scripts still use `better-sqlite3` though.
+
 ## Stack
 
 Solid/Solid-Start, Vite, Maplibre GL, Flag Icons, BeerCSS, sql.js/better-sqlite3.
