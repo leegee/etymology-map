@@ -26,6 +26,7 @@ export default function WordSearch(props: Props) {
                     <input
                         name="search"
                         type="search"
+                        autocomplete="off"
                         placeholder="Enter an English word"
                         title="Use only word characters"
                         value={value()}
