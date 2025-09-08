@@ -21,7 +21,11 @@ export default function CenturySlider(props: Props) {
     return (
         <fieldset class="row tiny-padding small-round">
 
-            <button class="secondary small circle no-padding" onClick={() => changeValue(-1)}>
+            <button
+                disabled={props.disabled}
+                class="secondary small circle no-padding"
+                onClick={() => changeValue(-1)}
+            >
                 <i>arrow_back</i>
                 <div class="tooltip">{yearLabel(props.years[0])}</div>
             </button>
@@ -44,7 +48,11 @@ export default function CenturySlider(props: Props) {
                 {/* <span class="helper">Zoom {props.years[props.value]}</span> */}
             </div>
 
-            <button class="secondary small circle no-padding" onClick={() => changeValue(1)}>
+            <button
+                disabled={props.disabled}
+                class="secondary small circle no-padding"
+                onClick={() => changeValue(1)}
+            >
                 <i>arrow_forward</i>
                 <div class="tooltip">{yearLabel(props.years[props.years.length - 1])}</div>
             </button>
