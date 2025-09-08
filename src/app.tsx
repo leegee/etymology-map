@@ -1,7 +1,7 @@
 import { createSignal, createMemo } from "solid-js";
 import { Translation, SubjectDefinition } from "./types";
 import WordSearch from "./components/WordSearch";
-import TranslationMap from "./components/TranslationMap";
+import TranslationMap from "./components/Map";
 import CenturySlider from "./components/CenturySlider";
 import AllCenturiesToggle from "./components/AllCenturiesToggle";
 import ZoomLevel from "./components/ZoomLevel";

@@ -3,7 +3,7 @@ import { Portal, render } from "solid-js/web";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-import styles from "./TranslationMap.module.css";
+import styles from "./Map.module.css";
 import { languages } from "../lib/langs";
 import type { Translation, SubjectDefinition } from "../types";
 
