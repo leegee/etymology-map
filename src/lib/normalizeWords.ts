@@ -1,4 +1,4 @@
-import { SubjectDefinition, Translation } from "~/types";
+import { SubjectDefinition, Translation } from "../types";
 import { getLanguage } from "./langs";
 
 

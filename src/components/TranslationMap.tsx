@@ -4,8 +4,8 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import styles from "./TranslationMap.module.css";
-import { languages } from "~/lib/langs";
-import type { Translation, SubjectDefinition } from "~/types";
+import { languages } from "../lib/langs";
+import type { Translation, SubjectDefinition } from "../types";
 
 // Don't include in zoom-to-bounds, as it skews the lovely northern map view
 const IGNORE_SOUTH_AFRICA = true;
