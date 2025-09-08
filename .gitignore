@@ -27,7 +27,7 @@ data/kaikki.org-dictionary-English.jsonl
 # The un-minified version:
 public/countries.geojson 
 
-*.tsbuildinfo
+tsconfig.tsbuildinfo
 public/countries.geojson
 data/countries.geojson
 *.tgz
