@@ -13,6 +13,7 @@ export default function App() {
   const [subject, setSubject] = createSignal<SubjectDefinition[]>([]);
   const [showAll, setShowAll] = createSignal(true);
   const [zoomLevel, setZoomLevel] = createSignal(0.75);
+  const [sliderIndex, setSliderIndex] = createSignal(0);
   const [searchTerm, setSearchTerm] = createSignal('');
 
   const currentYear = new Date().getFullYear();
@@ -36,7 +37,6 @@ export default function App() {
     return rv;
   });
 
-  const [sliderIndex, setSliderIndex] = createSignal(0);
 
   const dateRange = createMemo(() => {
     if (showAll()) return [0, currentYear];
@@ -44,7 +44,10 @@ export default function App() {
     return [year, year];
   });
 
+
   const handleSearch = async (q: string) => {
+    ui("#welcome-snackbar", 0);
+    ui("#error-snackbar", 0);
     setSearchTerm(q);
     const data = await fetchWords(q);
 
