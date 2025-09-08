@@ -182,13 +182,18 @@ export default function TranslationMap(props: Props) {
                                     {(def) => (
                                         <>
                                             <nav>
-                                                <h6 class="max left-align">Headline</h6>
+                                                <h5 class="max left-align bottom-padding">
+                                                    {def.word}
+                                                    &nbsp;
+                                                    ({def.pos})
+                                                    <br />
+                                                    <small>
+                                                        {def.year_start ?? ""}–{def.year_end ?? ""}
+                                                    </small>
+                                                </h5>
                                                 <button class="transparent link" onClick={() => setOpen(false)}><i>close</i></button>
                                             </nav>
 
-                                            <h6 class="bottom-padding">
-                                                {def.year_start ?? ""}–{def.year_end ?? ""} &mdash; {def.word} ({def.pos})
-                                            </h6>
                                             <div class="bottom-padding scroll">{def.etymology}</div>
                                         </>
                                     )}
