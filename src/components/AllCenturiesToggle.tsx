@@ -22,6 +22,7 @@ const AllCenturiesToggle: Component<Props> = (props) => {
                 </span>
             </label>
             <span class="helper">All</span>
+            <div class="tooltip">All at once or chronologically</div>
         </div>
     );
 };
