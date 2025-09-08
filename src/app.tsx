@@ -39,7 +39,7 @@ export default function App() {
 
 
   const dateRange = createMemo(() => {
-    if (showAll()) return [0, currentYear];
+    if (showAll()) return [-9999, currentYear];
     const year = availableYears()[sliderIndex()] || 0;
     return [year, year];
   });
