@@ -2,6 +2,8 @@
 
 A local-first time-boxed geographical map of the etymology of 10,000 English words.
 
+[Demo](https://leegee.github.io/etymology-map/)
+
 Uses `sql.js` to host a database of [Google Top 10,000 Words](https://raw.githubusercontent.com/first20hours/google-10000-english/refs/heads/master/google-10000-english.txt) as [extracted](https://kaikki.org/dictionary/rawdata.html) from [Wiktionary/](https://www.wiktionary.org/) by the [Wikiextract](https://aclanthology.org/2022.lrec-1.140/) folks.
 
 ## Use
@@ -16,7 +18,7 @@ Uses `sql.js` to host a database of [Google Top 10,000 Words](https://raw.github
     bun build
     bun deploy
 
-![Screenshot](./README.png)
+[![Screenshot](./README.png)](https://leegee.github.io/etymology-map/)
 
 ## Branches
 
