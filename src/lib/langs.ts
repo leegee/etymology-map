@@ -6,6 +6,7 @@ export type Language = {
     nativeName: string;
     coords: [number, number];
     countryCode: string;
+    useFlag?: boolean;
     yearRange: [number, number];
 };
 
@@ -42,7 +43,7 @@ export const languages: Record<string, Language> = {
 
     yi: { flag: "🇮🇱", englishName: "Yiddish", nativeName: "ייִדיש", coords: [31.7683, 35.2137], countryCode: "il", yearRange: [900, 9999] },
     ang: { flag: "🏴", englishName: "Old English", nativeName: "Ænglisc", coords: [54, 0], countryCode: "gb-eng", yearRange: [700, 1100] },
-    ohg: { flag: "🏴", englishName: "Old High German", nativeName: "Althochdeutsch", coords: [50.1109, 8.6821], countryCode: "xx", yearRange: [750, 1050] },
+    ohg: { flag: "🏴", englishName: "Old High German", nativeName: "Althochdeutsch", coords: [50, 8], countryCode: "xx", yearRange: [750, 1050] },
     non: { flag: "🏴", englishName: "Old Norse", nativeName: "Norrœnt", coords: [65, 10.75], countryCode: "xx", yearRange: [800, 1300] },
     got: { flag: "🏴", englishName: "Gothic", nativeName: "Gutisk", coords: [54.6872, 25.2797], countryCode: "xx", yearRange: [300, 600] },
     nds: { flag: "🇩🇪", englishName: "Low German", nativeName: "Plattdüütsch", coords: [52.5200, 13.4050], countryCode: "de", yearRange: [1100, 9999] },
@@ -52,9 +53,9 @@ export const languages: Record<string, Language> = {
     li: { flag: "🇳🇱", englishName: "Limburgish", nativeName: "Limburgs", coords: [50.9384, 5.3527], countryCode: "nl", yearRange: [1500, 9999] },
 
     // etymology-only / proto / classical languages
-    pie: { flag: "🏴", englishName: "Proto-Indo-European", nativeName: "Proto-Indo-European", coords: [48, 20], countryCode: "xx", yearRange: [-4500, -2500] },
-    pit: { flag: "🏴", englishName: "Proto-Italic", nativeName: "Proto-Italic", coords: [42, 12], countryCode: "xx", yearRange: [-1000, -500] },
-    pgm: { flag: "🏴", englishName: "Proto-Germanic", nativeName: "Proto-Germanic", coords: [54, 10], countryCode: "xx", yearRange: [-500, 200] },
+    pie: { flag: "🌐", englishName: "Proto-Indo-European", nativeName: "Proto-Indo-European", coords: [48, 20], countryCode: "xx", yearRange: [-4500, -2500] },
+    pit: { flag: "⚱️", englishName: "Proto-Italic", nativeName: "Proto-Italic", coords: [42, 12], countryCode: "xx", yearRange: [-1000, -500] },
+    pgm: { flag: "ᚠ", englishName: "Proto-Germanic", nativeName: "Proto-Germanic", coords: [54, 10], countryCode: "xx", yearRange: [-500, 200] },
     la: { flag: "🏴", englishName: "Latin", nativeName: "Latina", coords: [41.9, 12.5], countryCode: "it", yearRange: [-700, 200] },
     lla: { flag: "🏴", englishName: "Late Latin", nativeName: "Latina Tarda", coords: [41.9, 12.5], countryCode: "it", yearRange: [200, 600] },
     grc: { flag: "🏴", englishName: "Ancient Greek", nativeName: "Ἑλληνικά", coords: [37.9838, 23.7275], countryCode: "gr", yearRange: [-900, 300] },
@@ -405,7 +406,6 @@ export const languages: Record<string, Language> = {
 
     gmh: { flag: "🇩🇪", englishName: "Middle High German", nativeName: "Mittelhochdeutsch", coords: [51.1657, 10.4515], countryCode: "de", yearRange: [1050, 1350] },
     odt: { flag: "🇳🇱", englishName: "Old Dutch", nativeName: "Oudnederlands", coords: [52.1326, 5.2913], countryCode: "nl", yearRange: [500, 1150] },
-    pro: { flag: "🇪🇸", englishName: "Proto-Indo-European", nativeName: "—", coords: [47, 30], countryCode: "??", yearRange: [-4500, -2500] },
 
 }
 

@@ -1,5 +1,4 @@
-import { createSignal, createEffect } from "solid-js";
-import { yearLabel } from "~/lib/year-label";
+import { yearLabel } from "../lib/year-label";
 
 type Props = {
     disabled: boolean;
