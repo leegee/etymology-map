@@ -19,7 +19,7 @@ export default function CenturySlider(props: Props) {
     }
 
     const yearLabel = (year: number): string => {
-        return year + (year >= 0 ? ' AD' : ' BC')
+        return 'c ' + year + ' C ' + (year >= 0 ? 'AD' : 'BC')
     }
 
     return (
@@ -53,9 +53,9 @@ export default function CenturySlider(props: Props) {
                 <div class="tooltip">{yearLabel(props.years[props.years.length - 1])}</div>
             </button>
 
-            <div class="tooltip">Time period
-                <br />
-                {yearLabel(props.years[props.value])} - {yearLabel(props.years[props.value])}</div>
+            <div class="tooltip">
+                {yearLabel(props.years[props.value])}
+            </div>
         </div>
     );
 }
