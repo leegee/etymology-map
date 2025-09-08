@@ -1,22 +1,38 @@
-// db.ts
-import Database, { Statement } from "better-sqlite3";
-import { DB_FILE_PATH } from "./config";
+import initSqlJs, { Database as SQLDatabase, Statement } from "sql.js";
 import { httpLogger } from "./logger";
 
-const DB_KEY = Symbol.for("etymology-map.db");
-
-const globalDb = (globalThis as any)[DB_KEY];
-
-export const db = globalDb ?? new Database(DB_FILE_PATH, {
-    readonly: true,
-    fileMustExist: true,
-});
-
-if (!globalDb) {
-    (globalThis as any)[DB_KEY] = db;
-}
+let db: SQLDatabase | null = null;
+let isLoading = false;
 
 const isDev = process.env.NODE_ENV !== "production";
+
+async function loadDB() {
+    if (db) return db;
+    if (isLoading) {
+        // Wait until another load finishes
+        return new Promise<SQLDatabase>((resolve) => {
+            const interval = setInterval(() => {
+                if (db) {
+                    clearInterval(interval);
+                    resolve(db);
+                }
+            }, 50);
+        });
+    }
+    isLoading = true;
+
+    const SQL = await initSqlJs({
+        locateFile: (file) => `/sql-wasm/sql-wasm.wasm`,
+    });
+
+    const buffer = await fetch("/data/words.db").then((res) =>
+        res.arrayBuffer()
+    );
+    db = new SQL.Database(new Uint8Array(buffer));
+
+    isLoading = false;
+    return db;
+}
 
 function logQuery(sql: string, params: any[]) {
     if (isDev) {
@@ -25,28 +41,27 @@ function logQuery(sql: string, params: any[]) {
 }
 
 function lazyPrepare<T = any>(sql: string) {
-    let stmt: Statement | null = null;
-
     return {
-        all: (...params: any[]) => {
-            if (!stmt) stmt = db.prepare(sql);
-            // logQuery(sql, params);
-            return stmt?.all(...params) as T[];
+        all: async (...params: any[]): Promise<T[]> => {
+            const database = await loadDB();
+            const stmt = database.prepare(sql);
+            stmt.bind(params);
+            logQuery(sql, params);
+
+            const results: T[] = [];
+            while (stmt.step()) {
+                results.push(stmt.getAsObject() as T);
+            }
+            stmt.free();
+            return results;
         },
-        get: (...params: any[]) => {
-            if (!stmt) stmt = db.prepare(sql);
-            // logQuery(sql, params);
-            return stmt?.get(...params) as T;
-        },
-        run: (...params: any[]) => {
-            if (!stmt) stmt = db.prepare(sql);
-            // logQuery(sql, params);
-            return stmt?.run(...params);
+        get: async (...params: any[]): Promise<T | null> => {
+            const results = await lazyPrepare<T>(sql).all(...params);
+            return results[0] ?? null;
         },
     };
 }
 
-// Export lazy statements
 export const stmtFindExact = lazyPrepare(
     "SELECT * FROM words WHERE LOWER(word) = LOWER(?) LIMIT 1"
 );
@@ -56,3 +71,5 @@ export const stmtFindPrefix = lazyPrepare(
 export const stmtFindTranslations = lazyPrepare(
     "SELECT * FROM translations WHERE word_id = ?"
 );
+
+export { loadDB };

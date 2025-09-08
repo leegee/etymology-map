@@ -41,6 +41,7 @@
     "better-sqlite3": "^12.2.0",
     "flag-icons": "^7.5.0",
     "log4js": "^6.9.1",
-    "maplibre-gl": "^5.7.0"
+    "maplibre-gl": "^5.7.0",
+    "sql.js": "^1.13.0"
   }
 }

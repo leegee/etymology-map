@@ -1,4 +1,6 @@
 import { logger } from "../logger";
+import { stmtFindExact, stmtFindTranslations } from "../db";
+import { normalizeWords, normaliseSubjects } from "./normalizeWords";
 
 export const STATIC_BASE = "/static-data";
 
@@ -45,4 +47,27 @@ export async function fetchJSON<T>(url: string): Promise<T> {
         });
         throw err;
     }
+}
+
+export type WordsResponse = {
+    subject: any[];
+    translations: any[];
+};
+
+export async function fetchWords(word: string): Promise<WordsResponse> {
+    logger.debug('fetchWords enter with', word);
+    const wordRows = await stmtFindExact.all(word);
+    logger.debug('fetchWords got wordRows', wordRows);
+
+    if (!wordRows.length) return { subject: [], translations: [] };
+
+    const wordRow = wordRows[0];
+    const translationsRaw = await stmtFindTranslations.all(wordRow.id);
+
+    logger.debug('fetchWords got translationRows', translationsRaw);
+
+    const translations = normalizeWords(translationsRaw);
+    const subject = normaliseSubjects([wordRow]);
+
+    return { subject, translations };
 }

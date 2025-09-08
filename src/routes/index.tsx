@@ -1,16 +1,12 @@
-import "./index.css";
 import "beercss/dist/cdn/beer.min.js";
-import { createSignal, createMemo, createEffect } from "solid-js";
-import WordSearch from "~/components/WordSearch";
+import { createSignal, createMemo } from "solid-js";
 import { Translation, SubjectDefinition } from "~/types";
-import { WordsResponse } from "./api/words";
+import WordSearch from "~/components/WordSearch";
 import TranslationMap from "~/components/TranslationMap";
 import CenturySlider from "~/components/CenturySlider";
 import AllCenturiesToggle from "~/components/AllCenturiesToggle";
-import { normaliseSubjects, normalizeWords } from "~/lib/normalizeWords";
 import ZoomLevel from "~/components/ZoomLevel";
-import { fetchJSON, pathForhWord, STATIC_BASE } from "~/lib/fetch";
-import { getLanguage } from "~/lib/langs";
+import { fetchWords } from "~/lib/fetch";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
@@ -49,15 +45,12 @@ export default function Home() {
   });
 
   const handleSearch = async (word: string) => {
-    const data = await fetchJSON<WordsResponse>("/api/words?word=" + encodeURIComponent(word));
+    const data = await fetchWords(word);
 
-    const translations = normalizeWords(data.translations);
-    const subjects = normaliseSubjects(data.subject);
+    console.log(data.subject);
 
-    console.log(subjects)
-
-    setSubject(subjects);
-    setTranslations(translations);
+    setSubject(data.subject);
+    setTranslations(data.translations);
   };
 
   const filteredTranslations = createMemo(() =>
