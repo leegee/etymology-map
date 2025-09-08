@@ -24,4 +24,6 @@ app.config.timestamp_*.js
 Thumbs.db
 data/kaikki.org-dictionary-English.jsonl
 
+# The un-minified version:
 public/countries.geojson 
+

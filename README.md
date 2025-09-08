@@ -1,71 +1,38 @@
 # Etymology Map
 
-Currently maps Germanic roots of English words
+A local-first time-boxed geographical map of the etymology of 10,000 English words.
 
-wip
+Uses `sql.js` to host a database of [Google Top 10,000 Words](https://raw.githubusercontent.com/first20hours/google-10000-english/refs/heads/master/google-10000-english.txt) as [extracted](https://kaikki.org/dictionary/rawdata.html) from [Wiktionary/](https://www.wiktionary.org/) by the [Wikiextract](https://aclanthology.org/2022.lrec-1.140/) folks.
 
 ## Use
 
     mkdir data
     curl -L -o data/raw-wiktextract-data.jsonl \
         https://huggingface.co/datasets/aletrn/wiktionary/resolve/main/raw-wiktextract-data.jsonl
-
     bun db:build
-
-    Total words inserted: 5300
-    Total translations inserted: 31629
-    Skipped empty translations: 772
-    Skipped non-Germanic translations or words: 1656820
-
-    bun db:see craft
-    # Should output json for 'craft'
 
     bun dev
 
     bun build
     bun deploy
 
-![WIP](./README-init.png)
+![Screenshot](./README.png)
 
-![WIP](./README-2.png)
+## Branches
+
+The original branch uses the Solid-Start library, `better-sqlite3`, and is now named `with-server`.
+
+## Stack
+
+Solid/Solid-Start, Vite, Maplibre GL, Flag Icons, BeerCSS, sql.js/better-sqlite3.
 
 ## To Do
 
 * If no exact match is found, prefix search may return a list - allow the user to select from that
-* Time slider
-* Expand to Latinate and other words
+* Maybe [this](http://etym.org/) is better?
+* Maybe `zoom` is better as `style={{ transform: `scale(${zoom()})`, transformOrigin: "top left" }}`?
 
-## Sources
-
-Words come from a [dump](https://huggingface.co/datasets/aletrn/wiktionary/blob/main/raw-wiktextract-data.jsonl)
-of Wiktionary. Out of 1.41 million entries, only around 8,000 have translations.
-
-The data is not great. Here's the entry for 'dog' via `tsx scripts/see.tsx dog`:
-
-    Word: 
-        {
-            id: 81477,       
-            word: 'DOG',     
-            lang: 'en',      
-            pos: 'noun',     
-            etymology: null, 
-            year_start: 1500,
-            year_end: 9999   
-        }
-    Translations: []
-
-
-## To Do
-
-Maybe [this](http://etym.org/) is better?
-
-Maybe `zoom` is better as `style={{ transform: `scale(${zoom()})`, transformOrigin: "top left" }}`?
-
-## Credit
-
-Static build indexes the [Google Top 10,000 Words](https://raw.githubusercontent.com/first20hours/google-10000-english/refs/heads/master/google-10000-english.txt) - minus brand names, which are sadly quite frequent.
-
-## Test
+## Test Words
 
 `mouse`
 `face`

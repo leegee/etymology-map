@@ -2,7 +2,9 @@
   "name": "etymology-map",
   "description": "Mapping English word etymology",
   "version": "0.0.3",
+  "homepage": "https://leegee.github.io/etymology-map/",
   "scripts": {
+    "deploy": "bun run build && gh-pages -d .output/public/",
     "dev": "vinxi dev",
     "build": "vinxi build",
     "start": "vinxi start",
@@ -26,6 +28,7 @@
     "@types/maplibre-gl": "^1.14.0",
     "@types/sql.js": "^1.4.9",
     "@vitest/ui": "3.0.5",
+    "gh-pages": "^6.3.0",
     "jsdom": "^25.0.1",
     "solid-js": "^1.9.3",
     "tsx": "^4.20.5",
@@ -38,7 +41,6 @@
   "dependencies": {
     "@types/log4js": "^2.3.5",
     "beercss": "^3.11.33",
-    "better-sqlite3": "^12.2.0",
     "flag-icons": "^7.5.0",
     "log4js": "^6.9.1",
     "maplibre-gl": "^5.7.0",
