@@ -21,6 +21,8 @@ export default function TranslationMap(props: Props) {
     let map: maplibregl.Map | undefined;
     const markers: maplibregl.Marker[] = [];
 
+    const [open, setOpen] = createSignal(false);
+
     const addMarker = (lat: number, lng: number, content: () => JSX.Element) => {
         const markerEl = document.createElement("div");
         markerEl.className = styles["map-marker"];
@@ -63,6 +65,8 @@ export default function TranslationMap(props: Props) {
     createEffect(() => {
         if (!map) return;
 
+        setOpen(false);
+
         // console.log("Subject: ", props.subject);
         // console.log("Translations: ", props.translations);
 
@@ -70,7 +74,6 @@ export default function TranslationMap(props: Props) {
         const currentTranslations = props.translations;
 
         if (!currentSubjects.length && !currentTranslations.length) return;
-
 
         const highlightedCountries = new Set<string>();
 
@@ -162,7 +165,6 @@ export default function TranslationMap(props: Props) {
             bounds.extend({ lat: defLang.coords[0], lng: defLang.coords[1] });
 
             addMarker(defLang.coords[0], defLang.coords[1], () => {
-                const [open, setOpen] = createSignal(false);
                 return (
                     <>
                         <article class="secondary" style={{ zoom: props.zoom }}>
@@ -176,31 +178,19 @@ export default function TranslationMap(props: Props) {
 
                         <Portal mount={document.body}>
                             <dialog class="top" open={open()} onClick={(e) => e.stopPropagation()}>
-                                <h5>Etymology</h5>
-                                <div>
-                                    <table class="table">
-                                        <thead />
-                                        <tbody>
-                                            <For each={currentSubjects}>
-                                                {(def) => (
-                                                    <>
-                                                        <tr>
-                                                            <td>{def.year_start ?? ""}–{def.year_end ?? ""} &mdash; {def.word} ({def.pos})</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>{def.etymology}</td>
-                                                        </tr>
-                                                    </>
-                                                )}
-                                            </For>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <For each={currentSubjects}>
+                                    {(def) => (
+                                        <div>
+                                            <h6>{def.year_start ?? ""}–{def.year_end ?? ""} &mdash; {def.word} ({def.pos})</h6>
+                                            <div>{def.etymology}</div>
+                                        </div>
+                                    )}
+                                </For>
                                 <nav class="right-align">
                                     <button class="transparent link" onClick={() => setOpen(false)}>Close</button>
                                 </nav>
                             </dialog>
-                        </Portal>
+                        </Portal >
                     </>
                 );
             });
