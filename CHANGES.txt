@@ -1,3 +1,7 @@
+0.0.3 Monday 8 Sept 2025 
+
+Use the "Google Top 10,000 Words" file to restrict DB size
+
 0.0.2 Sunday 7 Sept 2025 
 
 Logging; prepared statements
