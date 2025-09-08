@@ -27,3 +27,4 @@ data/kaikki.org-dictionary-English.jsonl
 # The un-minified version:
 public/countries.geojson 
 
+*.tsbuildinfo
