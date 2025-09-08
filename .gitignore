@@ -22,6 +22,6 @@ app.config.timestamp_*.js
 
 .DS_Store
 Thumbs.db
-data/
+data/kaikki.org-dictionary-English.jsonl
 
 public/countries.geojson 
