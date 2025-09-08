@@ -1,6 +1,8 @@
 import initSqlJs, { Database as SQLDatabase, Statement } from "sql.js";
 import { httpLogger } from "./logger";
+import packageJson from "../package.json" assert { type: "json" };
 
+const urlRoot = `/${packageJson.name}/`;
 let db: SQLDatabase | null = null;
 let isLoading = false;
 
@@ -22,10 +24,10 @@ async function loadDB() {
     isLoading = true;
 
     const SQL = await initSqlJs({
-        locateFile: (file) => `/sql-wasm/sql-wasm.wasm`,
+        locateFile: (file) => `${urlRoot}/sql-wasm/sql-wasm.wasm`,
     });
 
-    const buffer = await fetch("/data/words.db").then((res) =>
+    const buffer = await fetch(`${urlRoot}/data/words.db`).then((res) =>
         res.arrayBuffer()
     );
     db = new SQL.Database(new Uint8Array(buffer));

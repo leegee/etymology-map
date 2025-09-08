@@ -1,6 +1,13 @@
-import { defineConfig } from 'vite'
-import solid from 'vite-plugin-solid'
+import solid from "vite-plugin-solid";
+import { defineConfig } from "vite";
+import packageJson from "./package.json" assert { type: "json" };
+
+console.log('Name:', packageJson.name);
 
 export default defineConfig({
+  base: `/${packageJson.name}/`,
   plugins: [solid()],
-})
+  resolve: {
+    conditions: ["development", "browser"],
+  },
+});

@@ -28,3 +28,6 @@ data/kaikki.org-dictionary-English.jsonl
 public/countries.geojson 
 
 *.tsbuildinfo
+public/countries.geojson
+data/countries.geojson
+*.tgz

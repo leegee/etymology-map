@@ -1,6 +1,8 @@
 import solid from "vite-plugin-solid";
-import { defineConfig } from "vitest/config";
-import packageJson from './package.json';
+import { defineConfig } from "vite";
+import packageJson from "./package.json" assert { type: "json" };
+
+console.log('Name:', packageJson.name);
 
 export default defineConfig({
   base: `/${packageJson.name}/`,
