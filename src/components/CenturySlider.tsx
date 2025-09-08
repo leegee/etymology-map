@@ -23,7 +23,7 @@ export default function CenturySlider(props: Props) {
     }
 
     return (
-        <div class="row middle">
+        <fieldset class="row tiny-padding small-round">
 
             <button class="secondary small circle no-padding" onClick={() => changeValue(-1)}>
                 <i>arrow_back</i>
@@ -56,7 +56,7 @@ export default function CenturySlider(props: Props) {
             <div class="tooltip">
                 {yearLabel(props.years[props.value])}
             </div>
-        </div>
+        </fieldset>
     );
 }
 
