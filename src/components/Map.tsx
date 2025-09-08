@@ -144,7 +144,11 @@ export default function TranslationMap(props: Props) {
                                             {(tr) => (
                                                 <tr>
                                                     <th class="top-align">{tr.year_start ?? ""}–{tr.year_end ?? ""}</th>
-                                                    <td>{tr.translation}</td>
+                                                    <td>
+                                                        <a title="View on Wiktionary" class="large" target="blank" href={`https://en.wiktionary.org/wiki/${tr.translation}#${lang.englishName}`}>
+                                                            {tr.translation}
+                                                        </a>
+                                                    </td>
                                                 </tr>
                                             )}
                                         </For>
