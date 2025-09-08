@@ -18,12 +18,16 @@ export default function CenturySlider(props: Props) {
         if (newValue >= 0 && newValue < props.years.length) props.onChange(newValue);
     }
 
+    const yearLabel = (year: number): string => {
+        return year + (year >= 0 ? ' AD' : ' BC')
+    }
+
     return (
         <div class="row middle">
 
             <button class="secondary small circle no-padding" onClick={() => changeValue(-1)}>
                 <i>arrow_back</i>
-                <div class="tooltip">Retreat in time</div>
+                <div class="tooltip">{yearLabel(props.years[0])}</div>
             </button>
 
             <div class="row">
@@ -46,12 +50,12 @@ export default function CenturySlider(props: Props) {
 
             <button class="secondary small circle no-padding" onClick={() => changeValue(1)}>
                 <i>arrow_forward</i>
-                <div class="tooltip">Advance in time</div>
+                <div class="tooltip">{yearLabel(props.years[props.years.length - 1])}</div>
             </button>
 
             <div class="tooltip">Time period
                 <br />
-                {props.years[props.value]} {(props.years[props.value] >= 0 ? 'AD' : 'BC')}</div>
+                {yearLabel(props.years[props.value])} - {yearLabel(props.years[props.value])}</div>
         </div>
     );
 }
