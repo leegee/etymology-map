@@ -12,7 +12,7 @@ import ZoomLevel from "~/components/ZoomLevel";
 import { fetchJSON, pathForhWord, STATIC_BASE } from "~/lib/fetch";
 
 const API_BASE = '/api/words?word=';
-const useStatic = true;
+const useStatic = false;
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
