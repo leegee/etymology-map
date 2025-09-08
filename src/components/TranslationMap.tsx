@@ -196,7 +196,7 @@ export default function TranslationMap(props: Props) {
             });
 
 
-            if (props.translations.length && !bounds.isEmpty()) map.fitBounds(bounds, { padding: 40 });
+            if (props.translations.length && !bounds.isEmpty()) map.fitBounds(bounds, { padding: 100 });
         }
     });
 
