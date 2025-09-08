@@ -12,6 +12,7 @@
     "test-watch": "vitest",
     "test-ui": "vitest --ui",
     "db:build": "bun tsx scripts/build-db.ts",
+    "minify": "bun -e 'import fs from \"fs\"; fs.writeFileSync(\"public/countries.min.geojson\", JSON.stringify(JSON.parse(fs.readFileSync(\"public/countries.geojson\"))))'",
     "db:see": "bun tsx scripts/see.ts",
     "db:dump": "bun tsx scripts/dump.ts",
     "t": "bun tsx scripts/analyse.ts"
