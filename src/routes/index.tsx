@@ -11,9 +11,6 @@ import { normalizeWords } from "~/lib/normalizeWords";
 import ZoomLevel from "~/components/ZoomLevel";
 import { fetchJSON, pathForhWord, STATIC_BASE } from "~/lib/fetch";
 
-const API_BASE = '/api/words?word=';
-const useStatic = false;
-
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
   const [subject, setSubject] = createSignal<SubjectDefinition[]>([]);
@@ -51,16 +48,7 @@ export default function Home() {
   });
 
   const handleSearch = async (word: string) => {
-    let url;
-    if (useStatic) {
-      url = STATIC_BASE + '/' + pathForhWord(word);
-    } else {
-      url = API_BASE + encodeURIComponent(word);
-    }
-
-    console.log(url);
-
-    const data = await fetchJSON<WordsResponse>(url);
+    const data = await fetchJSON<WordsResponse>("/api/words?word=" + encodeURIComponent(word));
 
     const translations = normalizeWords(data.translations);
     setSubject(data.subject);
