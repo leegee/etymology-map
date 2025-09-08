@@ -1,60 +1,63 @@
 import fs from "fs";
+import path from "path";
 import readline from "readline";
 import Database from "better-sqlite3";
 import { DB_FILE_PATH } from "../src/config";
 import { languages } from "../src/lib/langs";
 
+// Load allowed words
+const inputFile = path.resolve("./data/google-10000-english.txt");
+const allowedWords = new Set(
+    fs.readFileSync(inputFile, "utf-8")
+        .split(/\r?\n/)
+        .map(w => w.trim().toLowerCase())
+        .filter(Boolean)
+);
+
 const targetPOS: string[] = []; // ["noun", "verb"]
 
-const langMap: Record<string, string> = {
-    english: "en", german: "de", dutch: "nl", olddutch: "nl",
-    swedish: "sv", norwegian: "nn", danish: "da", icelandic: "is",
-    faroese: "fo", afrikaans: "af", yiddish: "yi",
-    oldenglish: "ang", oldhighgerman: "ohg", oldnorse: "non",
-    gothic: "got", lowgerman: "nds", frisian: "fry",
-    northfrisian: "frr", eastfrisian: "frs", limburgish: "li",
-    latin: "la", latelate: "lla", ancientgreek: "grc",
-    moderngreek: "el", coptic: "cop", egyptian: "egy",
-    proto: "pie", "proto-indo-european": "pie", "proto-germanic": "pgm",
-    "proto-west-germanic": "pgw",
-};
-
-// Detects language from etymology text
-function detectEtymologyLang(etymologyText?: string): string | null {
-    if (!etymologyText) return null;
-    const text = etymologyText.toLowerCase();
-    for (const [key, code] of Object.entries(langMap)) {
-        if (text.includes(key)) return code;
-    }
-    return null;
-}
-
-function getYearRange(etymologyText?: string, langCode?: string): [number | null, number | null] {
-    if (!etymologyText && !langCode) return [null, null];
-    const match = etymologyText?.match(/c\.?\s*(\d{3,4})/);
-    if (match) return [parseInt(match[1]), parseInt(match[1])];
-    if (langCode && languages[langCode]?.yearRange) return [...languages[langCode].yearRange];
-    if (etymologyText) {
-        const t = etymologyText.toLowerCase();
-        if (t.includes("old english")) return [700, 1100];
-        if (t.includes("middle english")) return [1100, 1500];
-        if (t.includes("modern english")) return [1500, 9999];
-    }
-
-    if (langCode && languages[langCode]?.yearRange) {
-        return languages[langCode].yearRange;
-    } else {
-        console.log('no for', langCode)
-    }
-
-    return [null, null];
-}
-
-function safeValue(val: any): string | number | null {
+function safeValue(val: any): string | null {
     if (val === undefined || val === null) return null;
-    if (typeof val === "string" || typeof val === "number") return val;
-    if (typeof val === "bigint") return Number(val);
+    if (typeof val === "string") return val;
+    if (typeof val === "number") return val.toString();
     return JSON.stringify(val);
+}
+
+function parseEtymology(etymologyText: string) {
+    type Stage = { word: string; lang: string };
+    const stages: Stage[] = [];
+    if (!etymologyText) return stages;
+
+    const parenMatches: string[] = [];
+    const text = etymologyText.replace(/\(([^)]+)\)/g, (_, p1) => {
+        parenMatches.push(p1);
+        return "";
+    });
+
+    const tokens = text
+        .split(/[,.;\n]/)
+        .map(s => s.trim())
+        .filter(Boolean);
+
+    const allTokens = [...tokens, ...parenMatches];
+
+    allTokens.forEach(token => {
+        const match = token.match(/(?:from\s+)?([A-Za-z\- ]+?)\s+([^\s][A-Za-z0-9’'’\-]+)/i);
+        if (match) {
+            const [, langNameRaw, wordRaw] = match;
+            const langName = langNameRaw.trim().toLowerCase();
+            const word = wordRaw.trim().replace(/\.$/, "");
+            const langCode = Object.keys(languages).find(
+                code => languages[code].englishName.toLowerCase() === langName
+            );
+            if (langCode && word) stages.push({ word, lang: langCode });
+        } else {
+            const word = token.trim();
+            if (word) stages.push({ word, lang: "en" });
+        }
+    });
+
+    return stages;
 }
 
 // Reset DB
@@ -67,17 +70,13 @@ CREATE TABLE words (
   word TEXT NOT NULL,
   lang TEXT NOT NULL,
   pos TEXT,
-  etymology TEXT,
-  year_start INTEGER,
-  year_end INTEGER
+  etymology TEXT
 );
 CREATE TABLE translations (
   id INTEGER PRIMARY KEY,
   word_id INTEGER NOT NULL REFERENCES words(id),
   translation TEXT NOT NULL,
-  lang TEXT NOT NULL,
-  year_start INTEGER,
-  year_end INTEGER
+  lang TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS cognates (
   id INTEGER PRIMARY KEY,
@@ -87,50 +86,43 @@ CREATE TABLE IF NOT EXISTS cognates (
 );
 `);
 
-const insertWord = db.prepare(`INSERT INTO words (word, lang, pos, etymology, year_start, year_end) VALUES (?, ?, ?, ?, ?, ?)`);
-const insertTrans = db.prepare(`INSERT INTO translations (word_id, translation, lang, year_start, year_end) VALUES (?, ?, ?, ?, ?)`);
-const insertCognate = db.prepare(`INSERT INTO cognates (word_id, cognate, lang) VALUES (?, ?, ?)`);
+const insertWord = db.prepare(
+    `INSERT INTO words (word, lang, pos, etymology) VALUES (?, ?, ?, ?)`
+);
+const insertTrans = db.prepare(
+    `INSERT INTO translations (word_id, translation, lang) VALUES (?, ?, ?)`
+);
+const insertCognate = db.prepare(
+    `INSERT INTO cognates (word_id, cognate, lang) VALUES (?, ?, ?)`
+);
 const usedLangs = new Map<string, { words: number; translations: number }>();
-
-const englishChain = new Set([
-    'en', 'enm', 'ang', 'non', 'pgw', 'pgm',
-    'fry', 'frs', 'frr', 'nds', 'ohg', 'nl', 'olddutch',
-    'la', 'lla', 'vl', // Latin & Vulgar Latin
-    'grc', 'el',       // Greek
-    'fro', 'fr',       // French
-    'pie',             // Proto-Indo-European
-]);
 
 const insertBatch = db.transaction((entries: any[]) => {
     let wordsInserted = 0;
     let translationsInserted = 0;
     let cognatesInserted = 0;
-    let skippedEmpty = 0;
 
     for (const entry of entries) {
+        const wordLower = (entry.word || "").toLowerCase();
+        if (!allowedWords.has(wordLower)) continue; // skip if not in subject words
+
         const rawLang = safeValue(entry.lang?.trim().toLowerCase().replace(/\s+/g, "") || "english");
-        let isoLang = langMap[rawLang as string] || "en";
-
-        const etyLang = detectEtymologyLang(entry.etymology_text);
-        if (etyLang) isoLang = etyLang;
-
-        const [yearStart, yearEnd] = getYearRange(entry.etymology_text, isoLang);
+        const isoLang = Object.keys(languages).find(
+            code => languages[code].englishName.toLowerCase() === rawLang
+        ) || "en";
 
         if (!usedLangs.has(isoLang)) usedLangs.set(isoLang, { words: 0, translations: 0 });
         usedLangs.get(isoLang)!.words++;
 
         const info = insertWord.run(
             safeValue(entry.word),
-            safeValue(isoLang),
+            isoLang,
             safeValue(entry.pos),
-            safeValue(entry.etymology_text),
-            safeValue(yearStart),
-            safeValue(yearEnd)
+            safeValue(entry.etymology_text)
         );
         const wordId = info.lastInsertRowid;
         wordsInserted++;
 
-        // Extract cognates
         if (entry.etymology_text?.includes("Cognates")) {
             const cognateSection = entry.etymology_text.split("Cognates")[1];
             const matches = cognateSection.match(/([A-Za-z\u00C0-\u024F\u0370-\u03FF\u0400-\u04FF’'’-]+),?/g);
@@ -138,50 +130,24 @@ const insertBatch = db.transaction((entries: any[]) => {
                 matches.forEach((cog: string) => {
                     const cogTrim = cog.trim();
                     if (cogTrim) {
-                        insertCognate.run(wordId, cogTrim, '??'); // Language unknown
+                        insertCognate.run(wordId, cogTrim, '??');
                         cognatesInserted++;
                     }
                 });
             }
         }
 
-        // English etymology chain
-        (entry.translations || []).forEach((tr: any) => {
-            const trWord = safeValue(tr.word);
-            if (!trWord) {
-                skippedEmpty++;
-                return;
-            }
-
-            const trLangRaw = safeValue(tr.lang_code?.trim().toLowerCase() || "??");
-            const trLang = langMap[trLangRaw as string] || trLangRaw as string;
-
-            if (!englishChain.has(trLang)) {
-                skippedEmpty++;
-                return;
-            }
-
-            const [yearStart, yearEnd] = getYearRange(tr.etymology_text, trLang);
-
-            insertTrans.run(
-                wordId,
-                trWord,
-                safeValue(trLang),
-                yearStart, yearEnd
-            );
-
+        const stages = parseEtymology(entry.etymology_text);
+        stages.forEach(stage => {
+            insertTrans.run(wordId, stage.word, stage.lang);
             translationsInserted++;
-            if (!usedLangs.has(trLang)) usedLangs.set(trLang, { words: 0, translations: 0 });
-            usedLangs.get(trLang)!.translations++;
+            if (!usedLangs.has(stage.lang)) usedLangs.set(stage.lang, { words: 0, translations: 0 });
+            usedLangs.get(stage.lang)!.translations++;
         });
-
-        if (wordsInserted % 1000 === 0) console.log(`Inserted ${wordsInserted} words so far...`);
-        if (translationsInserted > 0 && translationsInserted % 5000 === 0) console.log(`Inserted ${translationsInserted} translations so far...`);
     }
 
-    return { wordsInserted, translationsInserted, cognatesInserted, skippedEmpty };
+    return { wordsInserted, translationsInserted, cognatesInserted };
 });
-
 
 async function main() {
     const rl = readline.createInterface({
@@ -193,13 +159,11 @@ async function main() {
     let batch: any[] = [];
     let totalWords = 0;
     let totalTranslations = 0;
-    let totalSkippedEmpty = 0;
     let linesProcessed = 0;
 
     for await (const line of rl) {
         linesProcessed++;
         if (linesProcessed % 1000 === 0) console.log(`Read ${linesProcessed} lines...`);
-
         try {
             const entry = JSON.parse(line);
             if (targetPOS.length && !targetPOS.includes(entry.pos)) continue;
@@ -209,8 +173,7 @@ async function main() {
                 const res = insertBatch(batch);
                 totalWords += res.wordsInserted;
                 totalTranslations += res.translationsInserted;
-                totalSkippedEmpty += res.skippedEmpty;
-                console.log(`Batch inserted: ${res.wordsInserted} words, ${res.translationsInserted} translations, skipped ${res.skippedEmpty} unrelated`);
+                console.log(`Batch inserted: ${res.wordsInserted} words, ${res.translationsInserted} translations`);
                 batch = [];
             }
         } catch (err) {
@@ -222,17 +185,15 @@ async function main() {
         const res = insertBatch(batch);
         totalWords += res.wordsInserted;
         totalTranslations += res.translationsInserted;
-        totalSkippedEmpty += res.skippedEmpty;
-        console.log(`Final batch inserted: ${res.wordsInserted} words, ${res.translationsInserted} translations, skipped ${res.skippedEmpty} unrelated`);
+        console.log(`Final batch inserted: ${res.wordsInserted} words, ${res.translationsInserted} translations`);
     }
 
     db.prepare(`VACUUM;`).run();
     db.prepare(`PRAGMA optimize;`).run();
 
-    console.log("=== Import summary ===");
+    console.log("# Import summary");
     console.log(`Total words inserted: ${totalWords}`);
     console.log(`Total translations inserted: ${totalTranslations}`);
-    console.log(`Skipped unrelated translations: ${totalSkippedEmpty}`);
     console.log("\nLanguages used in this import:");
     Array.from(usedLangs).sort().forEach(([lang, counts]) => {
         console.log(`${lang}: ${counts.words} words, ${counts.translations} translations`);
