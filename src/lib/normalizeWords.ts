@@ -1,15 +1,31 @@
 import { SubjectDefinition, Translation } from "~/types";
+import { getLanguage } from "./langs";
+
+
+export function normaliseSubjects(subjects: SubjectDefinition[]): SubjectDefinition[] {
+    return subjects.map(s => {
+        const lang = getLanguage(s.lang);
+        return {
+            ...s,
+            year_start: lang.yearRange[0],
+            year_end: lang.yearRange[1],
+        };
+    });
+}
 
 export function normalizeWords(
     translations: Translation[]
 ): Translation[] {
-    const currentYear = new Date().getFullYear();
     const grouped = new Map<string, string[]>(); // key = `${lang}-${yearStart}-${yearEnd}`
 
     translations.forEach(t => {
-        const start = (t.year_start === 9999 || t.year_start == null) ? currentYear : t.year_start;
-        const end = (t.year_end === 9999 || t.year_end == null) ? currentYear : t.year_end;
-        const key = `${t.lang}|${start}|${end}`;
+        const lang = getLanguage(t.lang);
+        const trans = {
+            ...t,
+            year_start: lang.yearRange[0],
+            year_end: lang.yearRange[1]
+        };
+        const key = `${trans.lang}|${trans.year_start}|${trans.year_end}`;
         if (!grouped.has(key)) grouped.set(key, []);
         grouped.get(key)!.push(t.translation);
     });
@@ -23,7 +39,7 @@ export function normalizeWords(
                 translation: words.join("; "),
                 lang,
                 year_start: Number(startStr),
-                year_end: Number(endStr)
+                year_end: Number(endStr),
             };
         }
     );

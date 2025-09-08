@@ -23,7 +23,8 @@ export const getLanguage = (langCode: string): Language => {
         };
     }
     if (lang.yearRange[0] === 9999) lang.yearRange[0] = new Date().getFullYear();
-    if (lang.yearRange[1] === 9999) lang.yearRange[0] = new Date().getFullYear();
+    if (lang.yearRange[1] === 9999) lang.yearRange[1] = new Date().getFullYear();
+
     return lang;
 }
 

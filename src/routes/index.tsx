@@ -7,9 +7,10 @@ import { WordsResponse } from "./api/words";
 import TranslationMap from "~/components/TranslationMap";
 import CenturySlider from "~/components/CenturySlider";
 import AllCenturiesToggle from "~/components/AllCenturiesToggle";
-import { normalizeWords } from "~/lib/normalizeWords";
+import { normaliseSubjects, normalizeWords } from "~/lib/normalizeWords";
 import ZoomLevel from "~/components/ZoomLevel";
 import { fetchJSON, pathForhWord, STATIC_BASE } from "~/lib/fetch";
+import { getLanguage } from "~/lib/langs";
 
 export default function Home() {
   const [translations, setTranslations] = createSignal<Translation[]>([]);
@@ -51,7 +52,11 @@ export default function Home() {
     const data = await fetchJSON<WordsResponse>("/api/words?word=" + encodeURIComponent(word));
 
     const translations = normalizeWords(data.translations);
-    setSubject(data.subject);
+    const subjects = normaliseSubjects(data.subject);
+
+    console.log(subjects)
+
+    setSubject(subjects);
     setTranslations(translations);
   };
 
