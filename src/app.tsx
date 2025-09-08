@@ -1,4 +1,3 @@
-import "beercss/dist/cdn/beer.min.js";
 import { createSignal, createMemo } from "solid-js";
 import { Translation, SubjectDefinition } from "./types";
 import WordSearch from "./components/WordSearch";
@@ -93,8 +92,7 @@ export default function App() {
         />
       </nav>
 
-      {/* <main class="responsive"> */}
-      <main>
+      <main class="responsive no-padding max">
         <TranslationMap
           subject={subject()}
           translations={filteredTranslations()}
