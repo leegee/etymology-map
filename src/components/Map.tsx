@@ -151,10 +151,9 @@ export default function GeoMap(props: Props) {
                                         <For each={trs}>
                                             {(tr) => (
                                                 <tr>
-                                                    <th class="top-align">
-                                                        {yearLabel(tr.year_start)}
-                                                        –
-                                                        {yearLabel(tr.year_end)}
+                                                    <th class="top-align" style={{ "word-break": "break-word" }} innerHTML={
+                                                        yearLabel(tr.year_start) + '–<br/>' + yearLabel(tr.year_end)
+                                                    }>
                                                     </th>
                                                     <td>
                                                         <a title="View on Wiktionary" class="large" target="blank" href={`https://en.wiktionary.org/wiki/${tr.linked_word}#${lang.englishName}`}>

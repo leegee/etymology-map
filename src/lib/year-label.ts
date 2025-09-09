@@ -1,2 +1,2 @@
-export const yearLabel = (year: number | undefined): string => year ? ('c ' + (year) + ' C ' + (year >= 0 ? 'AD' : 'BC')) : '?';
+export const yearLabel = (year: number | undefined): string => year ? (year + '&nbsp;' + (year >= 0 ? 'AD' : 'BC')) : '?';
 
