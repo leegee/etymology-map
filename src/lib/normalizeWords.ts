@@ -1,4 +1,4 @@
-import { SubjectDefinition, Translation } from "../types";
+import { SubjectDefinition, WorldLink } from "../types";
 import { getLanguage } from "./langs";
 
 
@@ -14,11 +14,11 @@ export function normaliseSubjects(subjects: SubjectDefinition[]): SubjectDefinit
 }
 
 export function normalizeWords(
-    translations: Translation[]
-): Translation[] {
+    wordLinks: WorldLink[]
+): WorldLink[] {
     const grouped = new Map<string, string[]>(); // key = `${lang}-${yearStart}-${yearEnd}`
 
-    translations.forEach(t => {
+    wordLinks.forEach(t => {
         const lang = getLanguage(t.lang);
         const trans = {
             ...t,
@@ -27,16 +27,16 @@ export function normalizeWords(
         };
         const key = `${trans.lang}|${trans.year_start}|${trans.year_end}`;
         if (!grouped.has(key)) grouped.set(key, []);
-        grouped.get(key)!.push(t.translation);
+        grouped.get(key)!.push(t.linked_word);
     });
 
-    const normalizedTranslations: Translation[] = Array.from(grouped.entries()).map(
+    const normalizedwordLinks: WorldLink[] = Array.from(grouped.entries()).map(
         ([key, words]) => {
             const [lang, startStr, endStr] = key.split("|");
             return {
                 id: 0, // placeholder
                 word_id: 0, // placeholder
-                translation: words.join("; "),
+                linked_word: words.join("; "),
                 lang,
                 year_start: Number(startStr),
                 year_end: Number(endStr),
@@ -44,5 +44,5 @@ export function normalizeWords(
         }
     );
 
-    return normalizedTranslations;
+    return normalizedwordLinks;
 }

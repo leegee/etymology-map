@@ -1,7 +1,7 @@
 import { createSignal, createMemo, onMount } from "solid-js";
-import { Translation, SubjectDefinition } from "./types";
+import { WorldLink, SubjectDefinition } from "./types";
 import WordSearch from "./components/WordSearch";
-import TranslationMap from "./components/Map";
+import GeoMap from "./components/Map";
 import CenturySlider from "./components/CenturySlider";
 import AllCenturiesToggle from "./components/AllCenturiesToggle";
 import ZoomLevel from "./components/ZoomLevel";
@@ -9,7 +9,7 @@ import { fetchWords } from "./lib/fetch";
 import { Portal } from "solid-js/web";
 
 export default function App() {
-  const [translations, setTranslations] = createSignal<Translation[]>([]);
+  const [wordLinks, setwordLinks] = createSignal<WorldLink[]>([]);
   const [subject, setSubject] = createSignal<SubjectDefinition[]>([]);
   const [showAll, setShowAll] = createSignal(true);
   const [zoomLevel, setZoomLevel] = createSignal(0.75);
@@ -22,7 +22,7 @@ export default function App() {
     const set = new Set<number>();
     const currentYear = new Date().getFullYear();
 
-    translations().forEach(t => {
+    wordLinks().forEach(t => {
       const start = Number(t.year_start) ?? 0;
       let end = Number(t.year_end) ?? currentYear;
 
@@ -51,17 +51,17 @@ export default function App() {
     setSearchTerm(q);
     const data = await fetchWords(q);
 
-    if (data.translations.length === 0) {
+    if (data.wordLinks.length === 0) {
       ui("#error-snackbar");
       setTimeout(() => ui("#error-snackbar", 0), 2_000);
     }
 
     setSubject(data.subject);
-    setTranslations(data.translations);
+    setwordLinks(data.wordLinks);
   };
 
-  const filteredTranslations = createMemo(() =>
-    translations().filter(t => {
+  const filteredwordLinks = createMemo(() =>
+    wordLinks().filter(t => {
       const start = Number(t.year_start) || 0;
       let end = Number(t.year_end) || currentYear;
       const [min, max] = dateRange();
@@ -109,9 +109,9 @@ export default function App() {
       </nav>
 
       <main class="responsive no-padding max">
-        <TranslationMap
+        <GeoMap
           subject={subject()}
-          translations={filteredTranslations()}
+          wordLinks={filteredwordLinks()}
           zoom={zoomLevel()}
         />
       </main>

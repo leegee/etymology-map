@@ -70,8 +70,8 @@ export const stmtFindExact = lazyPrepare(
 export const stmtFindPrefix = lazyPrepare(
     "SELECT * FROM words WHERE LOWER(word) LIKE LOWER(?) LIMIT 50"
 );
-export const stmtFindTranslations = lazyPrepare(
-    "SELECT * FROM translations WHERE word_id = ?"
+export const stmtFindwordLinks = lazyPrepare(
+    "SELECT * FROM word_links WHERE word_id = ?"
 );
 
 export { loadDB };

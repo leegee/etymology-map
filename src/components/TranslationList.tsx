@@ -1,17 +1,17 @@
 import { Show } from "solid-js";
 import { languages } from "~/lib/langs";
-import { Translation } from "~/types";
+import { WorldLink } from "~/types";
 
 type Props = {
-    translations: Translation[];
+    wordLinks: WorldLink[];
 };
 
-export default function TranslationList(props: Props) {
+export default function WordList(props: Props) {
     return (
-        <Show when={props.translations.length}>
+        <Show when={props.wordLinks.length}>
             <div class="center padding medium-width">
                 <h2>Results</h2>
-                {props.translations.map((tr) => {
+                {props.wordLinks.map((tr) => {
                     const lang = languages[tr.lang];
                     return (
                         <div class="row" lang={tr.lang}>
@@ -19,7 +19,7 @@ export default function TranslationList(props: Props) {
                                 <span class={`fi fi-${lang.countryCode}`}></span>
                                 <span>{lang.englishName}</span>
                             </div>
-                            <div class="card-text">{tr.translation}</div>
+                            <div class="card-text">{tr.linked_word}</div>
                         </div>
 
                     );

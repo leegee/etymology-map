@@ -1,5 +1,5 @@
 import { logger } from "../logger";
-import { stmtFindExact, stmtFindTranslations } from "../db";
+import { stmtFindExact, stmtFindwordLinks } from "../db";
 import { normalizeWords, normaliseSubjects } from "./normalizeWords";
 
 export const STATIC_BASE = "/static-data";
@@ -51,7 +51,7 @@ export async function fetchJSON<T>(url: string): Promise<T> {
 
 export type WordsResponse = {
     subject: any[];
-    translations: any[];
+    wordLinks: any[];
 };
 
 export async function fetchWords(word: string): Promise<WordsResponse> {
@@ -59,15 +59,15 @@ export async function fetchWords(word: string): Promise<WordsResponse> {
     const wordRows = await stmtFindExact.all(word);
     logger.debug('fetchWords got wordRows', wordRows);
 
-    if (!wordRows.length) return { subject: [], translations: [] };
+    if (!wordRows.length) return { subject: [], wordLinks: [] };
 
     const wordRow = wordRows[0];
-    const translationsRaw = await stmtFindTranslations.all(wordRow.id);
+    const wordLinksRaw = await stmtFindwordLinks.all(wordRow.id);
 
-    logger.debug('fetchWords got translationRows', translationsRaw);
+    logger.debug('fetchWords got linked_word rows', wordLinksRaw);
 
-    const translations = normalizeWords(translationsRaw);
+    const wordLinks = normalizeWords(wordLinksRaw);
     const subject = normaliseSubjects([wordRow]);
 
-    return { subject, translations };
+    return { subject, wordLinks };
 }

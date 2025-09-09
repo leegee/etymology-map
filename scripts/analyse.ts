@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS words (
   year_start INTEGER,
   year_end INTEGER
 );
-CREATE TABLE IF NOT EXISTS translations (
+CREATE TABLE IF NOT EXISTS word_links (
   id INTEGER PRIMARY KEY,
   word_id INTEGER NOT NULL REFERENCES words(id),
   translation TEXT NOT NULL,
@@ -133,16 +133,16 @@ const insertWord = db.prepare(`
 `);
 
 const insertTrans = db.prepare(`
-  INSERT INTO translations (word_id, translation, lang, year_start, year_end)
+  INSERT INTO word_links (word_id, translation, lang, year_start, year_end)
   VALUES (?, ?, ?, ?, ?)
 `);
 
-const usedLangs = new Map<string, { words: number; translations: number }>();
+const usedLangs = new Map<string, { words: number; wordLinks: number }>();
 
 // --- Main batch insert with filtering ---
 const insertBatch = db.transaction((entries: any[]) => {
     let wordsInserted = 0;
-    let translationsInserted = 0;
+    let wordLinksInserted = 0;
     let skippedEmpty = 0;
 
     for (const entry of entries) {
@@ -175,7 +175,7 @@ const insertBatch = db.transaction((entries: any[]) => {
 
         const [yearStart, yearEnd] = parseYears(etym, isoLang);
 
-        if (!usedLangs.has(isoLang)) usedLangs.set(isoLang, { words: 0, translations: 0 });
+        if (!usedLangs.has(isoLang)) usedLangs.set(isoLang, { words: 0, wordLinks: 0 });
         usedLangs.get(isoLang)!.words++;
 
         const info = insertWord.run(
@@ -189,7 +189,7 @@ const insertBatch = db.transaction((entries: any[]) => {
         const wordId = info.lastInsertRowid;
         wordsInserted++;
 
-        (entry.translations || []).forEach((tr: any) => {
+        (entry.wordLinks || []).forEach((tr: any) => {
             const trLangRaw = safeValue(tr.lang_code?.trim().toLowerCase().replace(/\s+/g, "") || "??");
             const trLang = langMap[trLangRaw as string] || trLangRaw as string;
             const word = safeValue(tr.word);
@@ -203,13 +203,13 @@ const insertBatch = db.transaction((entries: any[]) => {
                 safeValue(trStart),
                 safeValue(trEnd)
             );
-            translationsInserted++;
-            if (!usedLangs.has(trLang)) usedLangs.set(trLang, { words: 0, translations: 0 });
-            usedLangs.get(trLang)!.translations++;
+            wordLinksInserted++;
+            if (!usedLangs.has(trLang)) usedLangs.set(trLang, { words: 0, wordLinks: 0 });
+            usedLangs.get(trLang)!.wordLinks++;
         });
     }
 
-    return { wordsInserted, translationsInserted, skippedEmpty };
+    return { wordsInserted, wordLinksInserted, skippedEmpty };
 });
 
 async function main() {
@@ -221,7 +221,7 @@ async function main() {
     const batchSize = 1000;
     let batch: any[] = [];
     let totalWords = 0;
-    let totalTranslations = 0;
+    let totalwordLinks = 0;
     let totalSkippedEmpty = 0;
 
     for await (const line of rl) {
@@ -233,7 +233,7 @@ async function main() {
             if (batch.length >= batchSize) {
                 const res = insertBatch(batch);
                 totalWords += res.wordsInserted;
-                totalTranslations += res.translationsInserted;
+                totalwordLinks += res.wordLinksInserted;
                 totalSkippedEmpty += res.skippedEmpty;
                 batch = [];
             }
@@ -245,7 +245,7 @@ async function main() {
     if (batch.length > 0) {
         const res = insertBatch(batch);
         totalWords += res.wordsInserted;
-        totalTranslations += res.translationsInserted;
+        totalwordLinks += res.wordLinksInserted;
         totalSkippedEmpty += res.skippedEmpty;
     }
 
@@ -254,18 +254,18 @@ async function main() {
 
     console.log("=== Import summary ===");
     console.log(`Total words inserted: ${totalWords}`);
-    console.log(`Total translations inserted: ${totalTranslations}`);
-    console.log(`Skipped empty translations: ${totalSkippedEmpty}`);
+    console.log(`Total word_links inserted: ${totalwordLinks}`);
+    console.log(`Skipped empty word_links: ${totalSkippedEmpty}`);
     console.log("\nLanguages used in this import:");
     Array.from(usedLangs).sort().forEach(([lang, counts]) => {
-        console.log(`${lang}: ${counts.words} words, ${counts.translations} translations`);
+        console.log(`${lang}: ${counts.words} words, ${counts.wordLinks} word_links`);
     });
 
     const wordCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM words`).get() as { cnt: number }).cnt;
-    const transCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM translations`).get() as { cnt: number }).cnt;
+    const transCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM wordLinks`).get() as { cnt: number }).cnt;
     console.log("\n=== Verification counts from DB ===");
     console.log(`Words table count: ${wordCount}`);
-    console.log(`Translations table count: ${transCount}`);
+    console.log(`wordLinks table count: ${transCount}`);
 }
 
 main().catch(err => console.error("Fatal error:", err));

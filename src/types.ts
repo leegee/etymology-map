@@ -8,10 +8,10 @@ export type SubjectDefinition = {
     year_end?: number | null;
 };
 
-export type Translation = {
+export type WorldLink = {
     id: number;
     word_id: number;
-    translation: string;
+    linked_word: string;
     lang: string;
     year_start?: number;
     year_end?: number;

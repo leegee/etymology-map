@@ -5,7 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import styles from "./Map.module.css";
 import { languages } from "../lib/langs";
-import type { Translation, SubjectDefinition } from "../types";
+import type { WorldLink, SubjectDefinition } from "../types";
 import { yearLabel } from "../lib/year-label";
 
 // Don't include in zoom-to-bounds, as it skews the lovely northern map view
@@ -13,11 +13,11 @@ const IGNORE_SOUTH_AFRICA = true;
 
 type Props = {
     subject: SubjectDefinition[];
-    translations: Translation[];
+    wordLinks: WorldLink[];
     zoom: number;
 };
 
-export default function TranslationMap(props: Props) {
+export default function GeoMap(props: Props) {
     let mapContainer: HTMLDivElement | undefined;
     let map: maplibregl.Map | undefined;
     const markers: maplibregl.Marker[] = [];
@@ -74,16 +74,16 @@ export default function TranslationMap(props: Props) {
         setOpen(false);
 
         // console.log("Subject: ", props.subject);
-        // console.log("Translations: ", props.translations);
+        // console.log("wordLinks: ", props.wordLinks);
 
         const currentSubjects = props.subject;
-        const currentTranslations = props.translations;
+        const currentwordLinks = props.wordLinks;
 
-        if (!currentSubjects.length && !currentTranslations.length) return;
+        if (!currentSubjects.length && !currentwordLinks.length) return;
 
         const highlightedCountries = new Set<string>();
 
-        currentTranslations.forEach(tr => {
+        currentwordLinks.forEach(tr => {
             const lang = languages[tr.lang];
             if (lang?.countryCode) highlightedCountries.add(lang.countryCode.toUpperCase());
         });
@@ -110,21 +110,21 @@ export default function TranslationMap(props: Props) {
         markers.forEach((m) => m.remove());
         markers.length = 0;
 
-        // Group translations by language
-        const grouped: Record<string, Translation[]> = {};
-        currentTranslations.forEach((tr) => {
+        // Group wordLinks by language
+        const grouped: Record<string, WorldLink[]> = {};
+        currentwordLinks.forEach((tr) => {
             if (!grouped[tr.lang]) grouped[tr.lang] = [];
             grouped[tr.lang].push(tr);
         });
 
-        // Add translation markers
+        // Add linked_word markers
         Object.entries(grouped).forEach(([langCode, trs]) => {
             const lang = languages[langCode];
             if (!lang) return;
 
             const scrollClasses = () => {
                 const tooMany = trs.length > 2;
-                const tooLong = trs.some(tr => (tr.translation?.length ?? 0) > 150);
+                const tooLong = trs.some(tr => (tr.linked_word?.length ?? 0) > 150);
                 return (tooMany || tooLong) ? 'small-height scroll' : '';
             };
 
@@ -159,8 +159,8 @@ export default function TranslationMap(props: Props) {
                                                         {yearLabel(tr.year_end)}
                                                     </th>
                                                     <td>
-                                                        <a title="View on Wiktionary" class="large" target="blank" href={`https://en.wiktionary.org/wiki/${tr.translation}#${lang.englishName}`}>
-                                                            {tr.translation}
+                                                        <a title="View on Wiktionary" class="large" target="blank" href={`https://en.wiktionary.org/wiki/${tr.linked_word}#${lang.englishName}`}>
+                                                            {tr.linked_word}
                                                         </a>
                                                     </td>
                                                 </tr>
@@ -226,7 +226,7 @@ export default function TranslationMap(props: Props) {
             });
 
 
-            if (props.translations.length && !bounds.isEmpty()) {
+            if (props.wordLinks.length && !bounds.isEmpty()) {
                 // map.fitBounds(bounds, { padding: 100 });
                 map.fitBounds(bounds, {
                     padding: 100,
