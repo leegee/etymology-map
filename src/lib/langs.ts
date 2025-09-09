@@ -61,8 +61,13 @@ export const getLanguage = (codeOrName: string): Language => {
     }
 
     // Fix yearRange if placeholder 9999 is used
-    if (lang.yearRange[0] === 9999) lang.yearRange[0] = new Date().getFullYear() * -1;
-    if (lang.yearRange[1] === 9999) lang.yearRange[1] = new Date().getFullYear();
+    if (lang.yearRange[0] === 9999) {
+        lang.yearRange[0] = new Date().getFullYear() * -1;
+    }
+    if (lang.yearRange[1] === 9999) {
+        console.log(JSON.stringify(lang.yearRange))
+        lang.yearRange[1] = new Date().getFullYear();
+    }
 
     return lang;
 };
@@ -185,7 +190,7 @@ export const languages: Record<string, Language> = {
     fi: { flag: "🇫🇮", englishName: "Finnish", nativeName: "Suomi", coords: [61.9241, 25.7482], countryCode: "fi", yearRange: [1500, 9999] },
     fj: { flag: "🇫🇯", englishName: "Fijian", nativeName: "Vosa Vakaviti", coords: [-17.7, 178.1], countryCode: "fj", yearRange: [1500, 9999] },
     frm: { flag: "🏴", englishName: "Middle French", nativeName: "Francien", coords: [46.0, 2.0], countryCode: "fr", yearRange: [1300, 1600] },
-    fr: { flag: "🇫🇷", englishName: "French", nativeName: "French", coords: [48.8566, 2.3522], countryCode: "fr", yearRange: [1400, 9999] },
+    fr: { flag: "🇫🇷", englishName: "French", nativeName: "French", coords: [46, 2.3522], countryCode: "fr", yearRange: [1400, 9999] },
     fro: { flag: "🇫🇷", englishName: "Old French", nativeName: "Ancien français", coords: [47.0, 2.0], countryCode: "fr", yearRange: [800, 1400] },
     frp: { flag: "🇫🇷", englishName: "Arpitan", nativeName: "Arpitan", coords: [46.0, 6.5], countryCode: "fr", yearRange: [1500, 9999] },
     fur: { flag: "🇮🇹", englishName: "Friulian", nativeName: "Furlan", coords: [46.1, 13.2], countryCode: "it", yearRange: [1200, 9999] },
@@ -314,10 +319,10 @@ export const languages: Record<string, Language> = {
     nog: { flag: "🇷🇺", englishName: "Nogai", nativeName: "Ногай", coords: [44.0, 46.0], countryCode: "ru", yearRange: [1500, 9999] },
     // non: { flag: "🏴", englishName: "Old Norse", nativeName: "Norrœnt", coords: [65.0, 10.75], countryCode: "xx", yearRange: [800, 1300] },
     nrf: { flag: "🇫🇷", englishName: "Norman French", nativeName: "Normand", coords: [49.0, -0.5], countryCode: "fr", yearRange: [1200, 1700] },
-    nrm: { flag: "🇫🇷", englishName: "Norman", nativeName: "Normand", coords: [49.0, 0.0], countryCode: "fr", yearRange: [1500, 9999] },
+    nrm: { flag: "🇫🇷", englishName: "Norman", nativeName: "Normand", coords: [49.0, 0.0], countryCode: "fr", yearRange: [1500, 1700] },
     nv: { flag: "🇺🇸", englishName: "Navajo", nativeName: "Diné Bizaad", coords: [36.0, -109.0], countryCode: "us", yearRange: [1500, 9999] },
     ny: { flag: "🇲🇼", englishName: "Chichewa", nativeName: "Chichewa", coords: [-13.5, 34.0], countryCode: "mw", yearRange: [1500, 9999] },
-    oc: { flag: "🇫🇷", englishName: "Occitan", nativeName: "Occitan", coords: [43.8041, 2.2110], countryCode: "fr", yearRange: [1200, 9999] },
+    oc: { flag: "🇫🇷", englishName: "Occitan/Provençal", nativeName: "Occitan", coords: [43.8041, 2.2110], countryCode: "fr", yearRange: [1200, 9999] },
     oj: { flag: "🇨🇦", englishName: "Ojibwe", nativeName: "ᐊᓂᔑᓈᐯᒧᐎᓐ", coords: [46.0, -85.0], countryCode: "ca", yearRange: [1500, 9999] },
     om: { flag: "🇪🇹", englishName: "Oromo", nativeName: "Afaan Oromoo", coords: [9.0, 40.0], countryCode: "et", yearRange: [1500, 9999] },
     or: { flag: "🇮🇳", englishName: "Odia", nativeName: "ଓଡ଼ିଆ", coords: [20.0, 85.8], countryCode: "in", yearRange: [1000, 9999] },
