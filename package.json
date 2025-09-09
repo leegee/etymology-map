@@ -12,11 +12,10 @@
     "test": "vitest run",
     "test-watch": "vitest",
     "test-ui": "vitest --ui",
-    "db:build": "bun tsx scripts/build-db.ts",
     "minify": "bun -e 'import fs from \"fs\"; fs.writeFileSync(\"public/countries.min.geojson\", JSON.stringify(JSON.parse(fs.readFileSync(\"data/countries.geojson\"))))'",
+    "db:build": "bun tsx scripts/build-db.ts",
     "db:see": "bun tsx scripts/see.ts",
-    "db:dump": "bun tsx scripts/dump.ts",
-    "t": "bun tsx scripts/analyse.ts"
+    "db:tsv": "bun tsx scripts//build-tsv-db.ts"
   },
   "devDependencies": {
     "@solidjs/testing-library": "^0.8.10",
@@ -41,6 +40,7 @@
     "@types/log4js": "^2.3.5",
     "beercss": "^3.11.33",
     "flag-icons": "^7.5.0",
+    "iso-639-3": "^3.0.1",
     "log4js": "^6.9.1",
     "maplibre-gl": "^5.7.0",
     "sql.js": "^1.13.0"

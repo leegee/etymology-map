@@ -1,13 +1,13 @@
 import { Switch, Match } from "solid-js";
 import styles from "./FlagIcon.module.css";
-import { languages } from "../lib/langs";
+import { getLanguage } from "../lib/langs";
 
 interface flagIconProps {
     langCode: string;
 }
 
 export default function flagIcon(props: flagIconProps) {
-    const langMeta = languages[props.langCode];
+    const langMeta = getLanguage(props.langCode);
     return (
         <Switch fallback={
             <span class={styles["icon-flag"]}>{langMeta.flag}</span>

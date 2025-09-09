@@ -29,6 +29,7 @@ export const getLanguage = (langCode: string): Language => {
     return lang;
 }
 
+// Exposed only for build-db scripts
 export const languages: Record<string, Language> = {
     en: { flag: "🇬🇧", englishName: "English", nativeName: "English", coords: [51.5074, -2], countryCode: "gb", yearRange: [1500, 9999] },
     de: { flag: "🇩🇪", englishName: "German", nativeName: "Deutsch", coords: [51.1657, 10.4515], countryCode: "de", yearRange: [1050, 9999] },

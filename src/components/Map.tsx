@@ -5,7 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import styles from "./Map.module.css";
 import type { WorldLink, SubjectDefinition } from "../types";
-import { languages } from "../lib/langs";
+import { getLanguage } from "../lib/langs";
 import { yearLabel } from "../lib/year-label";
 import FlagIcon from "./FlagIcon";
 
@@ -85,12 +85,12 @@ export default function GeoMap(props: Props) {
         const highlightedCountries = new Set<string>();
 
         currentwordLinks.forEach(tr => {
-            const lang = languages[tr.lang];
+            const lang = getLanguage(tr.lang);
             if (lang?.countryCode) highlightedCountries.add(lang.countryCode.toUpperCase());
         });
 
         currentSubjects.forEach(s => {
-            const lang = languages[s.lang];
+            const lang = getLanguage(s.lang);
             if (lang?.countryCode) highlightedCountries.add(lang.countryCode.toUpperCase());
         });
 
@@ -121,7 +121,7 @@ export default function GeoMap(props: Props) {
         // Add linked_word markers
         Object.entries(grouped).forEach(([langCode, trs]) => {
             console.log(trs)
-            const lang = languages[langCode];
+            const lang = getLanguage(langCode);
             if (!lang) return;
 
             const scrollClasses = () => {
@@ -175,7 +175,7 @@ export default function GeoMap(props: Props) {
 
         // Add subjects / etymology marker
         if (currentSubjects.length) {
-            const defLang = languages[currentSubjects[0].lang];
+            const defLang = getLanguage(currentSubjects[0].lang);
             if (!defLang) return;
 
             bounds.extend({ lat: defLang.coords[0], lng: defLang.coords[1] });

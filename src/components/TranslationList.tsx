@@ -1,6 +1,6 @@
 import { Show } from "solid-js";
-import { languages } from "~/lib/langs";
-import { WorldLink } from "~/types";
+import { getLanguage } from "../lib/langs";
+import { WorldLink } from "../types";
 
 type Props = {
     wordLinks: WorldLink[];
@@ -12,7 +12,7 @@ export default function WordList(props: Props) {
             <div class="center padding medium-width">
                 <h2>Results</h2>
                 {props.wordLinks.map((tr) => {
-                    const lang = languages[tr.lang];
+                    const lang = getLanguage(tr.lang);
                     return (
                         <div class="row" lang={tr.lang}>
                             <div class="row align-center gap">

@@ -1,4 +1,4 @@
-import { createSignal, createMemo, onMount } from "solid-js";
+import { createSignal, createMemo, onMount, createEffect } from "solid-js";
 import { WorldLink, SubjectDefinition } from "./types";
 import WordSearch from "./components/WordSearch";
 import GeoMap from "./components/Map";
@@ -17,6 +17,12 @@ export default function App() {
   const [searchTerm, setSearchTerm] = createSignal('');
 
   const currentYear = new Date().getFullYear();
+
+  // createEffect(() => {
+  //   console.log('years', availableYears());
+  //   console.log('links', wordLinks());
+  // });
+
 
   const availableYears = createMemo(() => {
     const set = new Set<number>();
@@ -44,6 +50,14 @@ export default function App() {
     return [year, year];
   });
 
+  const filteredwordLinks = createMemo(() =>
+    wordLinks().filter(t => {
+      const start = Number(t.year_start) || 0;
+      let end = Number(t.year_end) || currentYear;
+      const [min, max] = dateRange();
+      return start <= max && end >= min;
+    })
+  );
 
   const handleSearch = async (q: string) => {
     ui("#welcome-snackbar", 0);
@@ -59,15 +73,6 @@ export default function App() {
     setSubject(data.subject);
     setwordLinks(data.wordLinks);
   };
-
-  const filteredwordLinks = createMemo(() =>
-    wordLinks().filter(t => {
-      const start = Number(t.year_start) || 0;
-      let end = Number(t.year_end) || currentYear;
-      const [min, max] = dateRange();
-      return start <= max && end >= min;
-    })
-  );
 
   onMount(() => {
     ui("#welcome-snackbar");
