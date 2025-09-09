@@ -1,33 +1,64 @@
 import fs from "fs";
 import path from "path";
 import readline from "readline";
-import Database from "better-sqlite3";
+import Database, { Statement, RunResult } from "better-sqlite3";
 import { DB_FILE_PATH } from "../src/config";
-import { fallbackLangMap, languages } from "../src/lib/langs";
+import { languages } from "../src/lib/langs";
 
-// from the etymwn TSV
+// Entry from Kaikki.org JSONL
+export type KaikkiEntry = {
+    word: string;
+    lang?: string;
+    pos?: string;
+    etymology_text?: string;
+};
+
+// Entry from etymwn_offline.db
+export type EtymwnEntry = {
+    word: string;
+    lang?: string;
+    pos?: string;
+    etymology?: string;
+    cognates?: string[];
+};
+
+// Common Word entry type
+export type WordEntry = KaikkiEntry | EtymwnEntry;
+
+// Etymology parsing
+export type Stage = { word: string; lang: string };
+
+// Insert batch results
+export type InsertBatchResult = {
+    wordsInserted: number;
+    wordLinksInserted: number;
+    cognatesInserted: number;
+};
+
+// ---------- Paths ----------
 const offlineDbPath = path.resolve("./data/etymwn_offline.db");
-
-// Load allowed words
 const inputFile = path.resolve("./data/google-10000-english.txt");
+
+// ---------- Allowed words ----------
 const allowedWords = new Set(
-    fs.readFileSync(inputFile, "utf-8")
+    fs
+        .readFileSync(inputFile, "utf-8")
         .split(/\r?\n/)
-        .map(w => w.trim().toLowerCase())
+        .map((w) => w.trim().toLowerCase())
         .filter(Boolean)
 );
 
-const targetPOS: string[] = []; // ["noun", "verb"]
+// restrict by part of speech
+const targetPOS: string[] = []; // e.g. ["noun", "verb"]
 
-function safeValue(val: any): string | null {
+function safeValue(val: unknown): string | null {
     if (val === undefined || val === null) return null;
     if (typeof val === "string") return val;
     if (typeof val === "number") return val.toString();
     return JSON.stringify(val);
 }
 
-function parseEtymology(etymologyText: string) {
-    type Stage = { word: string; lang: string };
+function parseEtymology(etymologyText?: string): Stage[] {
     const stages: Stage[] = [];
     if (!etymologyText) return stages;
 
@@ -39,23 +70,27 @@ function parseEtymology(etymologyText: string) {
 
     const tokens = text
         .split(/[,.;\n]/)
-        .map(s => s.trim())
+        .map((s) => s.trim())
         .filter(Boolean);
 
     const allTokens = [...tokens, ...parenMatches]
-        .map(t => t.trim())
-        .filter(t => t && !/^[;,.]+$/.test(t));
+        .map((t) => t.trim())
+        .filter((t) => t && !/^[;,.]+$/.test(t));
 
-    allTokens.forEach(token => {
-        const match = token.match(/(?:from\s+)?([A-Za-z\- ]+?)\s+([^\s][A-Za-z0-9’'’\-]+)/i);
+    allTokens.forEach((token) => {
+        const match = token.match(
+            /(?:from\s+)?([A-Za-z\- ]+?)\s+([^\s][A-Za-z0-9’'’\-]+)/i
+        );
         if (match) {
             const [, langNameRaw, wordRaw] = match;
             const langName = langNameRaw.trim().toLowerCase();
             const word = wordRaw.trim().replace(/\.$/, "");
-            const langCode = Object.keys(languages).find(
-                code => languages[code].englishName.toLowerCase() === langName
-            );
-            if (langCode && word) stages.push({ word, lang: langCode });
+            const langCode =
+                Object.keys(languages).find(
+                    (code) =>
+                        languages[code].englishName.toLowerCase() === langName
+                ) || "en";
+            if (word) stages.push({ word, lang: langCode });
         } else {
             const word = token.trim();
             if (word) stages.push({ word, lang: "en" });
@@ -65,7 +100,6 @@ function parseEtymology(etymologyText: string) {
     return stages;
 }
 
-// Reset DB
 if (fs.existsSync(DB_FILE_PATH)) fs.unlinkSync(DB_FILE_PATH);
 const db = new Database(DB_FILE_PATH);
 
@@ -91,75 +125,80 @@ CREATE TABLE IF NOT EXISTS cognates (
 );
 `);
 
-const insertWord = db.prepare(
+const insertWord: Statement = db.prepare(
     `INSERT INTO words (word, lang, pos, etymology) VALUES (?, ?, ?, ?)`
 );
-const insertLinkedWord = db.prepare(
+const insertLinkedWord: Statement = db.prepare(
     `INSERT INTO word_links (word_id, linked_word, lang) VALUES (?, ?, ?)`
 );
-const insertCognate = db.prepare(
+const insertCognate: Statement = db.prepare(
     `INSERT INTO cognates (word_id, cognate, lang) VALUES (?, ?, ?)`
 );
+
 const usedLangs = new Map<string, { words: number; wordLinks: number }>();
 
-const insertBatch = db.transaction((entries: any[]) => {
+const insertBatch = db.transaction((entries: KaikkiEntry[]): InsertBatchResult => {
     let wordsInserted = 0;
     let wordLinksInserted = 0;
     let cognatesInserted = 0;
 
     for (const entry of entries) {
         const wordLower = (entry.word || "").toLowerCase();
-        if (!allowedWords.has(wordLower)) continue; // skip if not in allowed words
+        if (!allowedWords.has(wordLower)) continue;
 
-        // Determine subject language
-        const rawLang = safeValue(entry.lang?.trim().toLowerCase().replace(/\s+/g, "") || "english");
-        const isoLang = Object.keys(languages).find(
-            code => languages[code].englishName.toLowerCase() === rawLang
-        ) || "en";
+        // subject language
+        const rawLang = safeValue(
+            entry.lang?.trim().toLowerCase().replace(/\s+/g, "") || "english"
+        );
+        const isoLang =
+            Object.keys(languages).find(
+                (code) => languages[code].englishName.toLowerCase() === rawLang
+            ) || "en";
 
-        // Track used languages
-        if (!usedLangs.has(isoLang)) usedLangs.set(isoLang, { words: 0, wordLinks: 0 });
+        // track used langs
+        if (!usedLangs.has(isoLang))
+            usedLangs.set(isoLang, { words: 0, wordLinks: 0 });
         usedLangs.get(isoLang)!.words++;
 
-        // Insert the subject word
-        const info = insertWord.run(
+        // insert subject word
+        const info: RunResult = insertWord.run(
             safeValue(entry.word),
             isoLang,
             safeValue(entry.pos),
             safeValue(entry.etymology_text)
         );
-        const wordId = info.lastInsertRowid;
+        const wordId = Number(info.lastInsertRowid);
         wordsInserted++;
 
-        // Insert cognates if any
+        // cognates
         if (entry.etymology_text?.includes("Cognates")) {
             const cognateSection = entry.etymology_text.split("Cognates")[1];
-            const matches = cognateSection.match(/([A-Za-z\u00C0-\u024F\u0370-\u03FF\u0400-\u04FF’'’-]+),?/g);
+            const matches = cognateSection.match(
+                /([A-Za-z\u00C0-\u024F\u0370-\u03FF\u0400-\u04FF’'’-]+),?/g
+            );
             if (matches) {
                 matches.forEach((cog: string) => {
                     const cogTrim = cog.trim();
                     if (cogTrim) {
-                        insertCognate.run(wordId, cogTrim, '??');
+                        insertCognate.run(wordId, cogTrim, "??");
                         cognatesInserted++;
                     }
                 });
             }
         }
 
-        // Parse etymology stages
+        // parse etymology
         const stages = parseEtymology(entry.etymology_text);
-
-        // Create a set of subject languages to filter wordLinks
         const subjectLangs = new Set([isoLang]);
 
-        stages.forEach(stage => {
-            // Skip wordLinks that match the subject language
+        stages.forEach((stage) => {
             if (subjectLangs.has(stage.lang)) return;
 
             insertLinkedWord.run(wordId, stage.word, stage.lang);
             wordLinksInserted++;
 
-            if (!usedLangs.has(stage.lang)) usedLangs.set(stage.lang, { words: 0, wordLinks: 0 });
+            if (!usedLangs.has(stage.lang))
+                usedLangs.set(stage.lang, { words: 0, wordLinks: 0 });
             usedLangs.get(stage.lang)!.wordLinks++;
         });
     }
@@ -167,32 +206,36 @@ const insertBatch = db.transaction((entries: any[]) => {
     return { wordsInserted, wordLinksInserted, cognatesInserted };
 });
 
-
-async function main() {
+async function main(): Promise<void> {
     const jsonlReadline = readline.createInterface({
         input: fs.createReadStream("./data/kaikki.org-dictionary-English.jsonl"),
-        crlfDelay: Infinity
+        crlfDelay: Infinity,
     });
 
     const batchSize = 1000;
-    let batch: any[] = [];
+    let batch: KaikkiEntry[] = [];
     let totalWords = 0;
-    let totalwordLinks = 0;
+    let totalWordLinks = 0;
     let linesProcessed = 0;
 
     for await (const line of jsonlReadline) {
         linesProcessed++;
-        if (linesProcessed % 10000 === 0) console.log(`Read ${linesProcessed} lines...`);
+        if (linesProcessed % 10000 === 0)
+            console.log(`Read ${linesProcessed} lines...`);
+
         try {
-            const entry = JSON.parse(line);
-            if (targetPOS.length && !targetPOS.includes(entry.pos)) continue;
+            const entry = JSON.parse(line) as KaikkiEntry;
+            if (targetPOS.length && entry.pos && !targetPOS.includes(entry.pos))
+                continue;
 
             batch.push(entry);
             if (batch.length >= batchSize) {
                 const res = insertBatch(batch);
                 totalWords += res.wordsInserted;
-                totalwordLinks += res.wordLinksInserted;
-                console.log(`Batch inserted: ${res.wordsInserted} words, ${res.wordLinksInserted} wordLinks`);
+                totalWordLinks += res.wordLinksInserted;
+                console.log(
+                    `Batch inserted: ${res.wordsInserted} words, ${res.wordLinksInserted} wordLinks`
+                );
                 batch = [];
             }
         } catch (err) {
@@ -200,22 +243,25 @@ async function main() {
         }
     }
 
-    // Augment from etymwn TSV
+    // augment from offline DB
     if (fs.existsSync(offlineDbPath)) {
         console.log("Augmenting DB from etymwn_offline.db...");
         const offlineDb = new Database(offlineDbPath, { readonly: true });
 
         const stmt = offlineDb.prepare("SELECT * FROM words");
-        for (const entry: any of stmt.iterate()) {
+        for (const entry of stmt.iterate() as Iterable<EtymwnEntry>) {
             const wordLower = (entry.word || "").toLowerCase();
-
             let wordId: number | null = null;
 
-            // Only insert main words if allowed
             if (allowedWords.has(wordLower)) {
-                const rawLang = (entry.lang || "english").trim().toLowerCase().replace(/\s+/g, "");
+                const rawLang = (entry.lang || "english")
+                    .trim()
+                    .toLowerCase()
+                    .replace(/\s+/g, "");
                 const isoLang =
-                    Object.keys(languages).find(c => languages[c].englishName.toLowerCase() === rawLang) || "en";
+                    Object.keys(languages).find(
+                        (c) => languages[c].englishName.toLowerCase() === rawLang
+                    ) || "en";
 
                 const info = insertWord.run(
                     entry.word,
@@ -223,34 +269,32 @@ async function main() {
                     entry.pos,
                     entry.etymology
                 );
-                wordId = info.lastInsertRowid;
+                wordId = Number(info.lastInsertRowid);
             }
 
-            // Parse etymology stages
             const stages = parseEtymology(entry.etymology);
-
-            // Insert linked words and cognates regardless
             if (wordId !== null) {
-                stages.forEach(stage => {
-                    insertLinkedWord.run(wordId, stage.word, stage.lang);
+                stages.forEach((stage) => {
+                    insertLinkedWord.run(wordId!, stage.word, stage.lang);
                 });
             }
 
             if (entry.cognates?.length) {
-                entry.cognates.forEach(cog => {
+                entry.cognates.forEach((cog) => {
                     if (wordId !== null) insertCognate.run(wordId, cog, "??");
                 });
             }
         }
-
     }
+
+    // leftover batch
     if (batch.length > 0) {
         const res = insertBatch(batch);
         totalWords += res.wordsInserted;
-        totalwordLinks += res.wordLinksInserted;
-        if (totalWords % 1000) {
-            console.log(`Final batch inserted: ${res.wordsInserted} words, ${res.wordLinksInserted} wordLinks`);
-        }
+        totalWordLinks += res.wordLinksInserted;
+        console.log(
+            `Final batch inserted: ${res.wordsInserted} words, ${res.wordLinksInserted} wordLinks`
+        );
     }
 
     db.prepare(`VACUUM;`).run();
@@ -258,15 +302,23 @@ async function main() {
 
     console.log("# Import summary");
     console.log(`Total words inserted: ${totalWords}`);
-    console.log(`Total word_links inserted: ${totalwordLinks}`);
+    console.log(`Total word_links inserted: ${totalWordLinks}`);
     console.log("\nLanguages used in this import:");
-    Array.from(usedLangs).sort().forEach(([lang, counts]) => {
-        console.log(`${lang}: ${counts.words} words, ${counts.wordLinks} word_links`);
-    });
+    Array.from(usedLangs)
+        .sort()
+        .forEach(([lang, counts]) => {
+            console.log(`${lang}: ${counts.words} words, ${counts.wordLinks} word_links`);
+        });
 
-    const wordCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM words`).get() as { cnt: number }).cnt;
-    const transCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM word_links`).get() as { cnt: number }).cnt;
-    const cognateCount = (db.prepare(`SELECT COUNT(*) AS cnt FROM cognates`).get() as { cnt: number }).cnt;
+    const wordCount = (
+        db.prepare(`SELECT COUNT(*) AS cnt FROM words`).get() as { cnt: number }
+    ).cnt;
+    const transCount = (
+        db.prepare(`SELECT COUNT(*) AS cnt FROM word_links`).get() as { cnt: number }
+    ).cnt;
+    const cognateCount = (
+        db.prepare(`SELECT COUNT(*) AS cnt FROM cognates`).get() as { cnt: number }
+    ).cnt;
 
     console.log("\n=== Verification counts from DB ===");
     console.log(`Words table count: ${wordCount}`);
@@ -274,4 +326,4 @@ async function main() {
     console.log(`Cognates table count: ${cognateCount}`);
 }
 
-main().catch(err => console.error("Fatal error:", err));
+main().catch((err) => console.error("Fatal error:", err));
