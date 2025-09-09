@@ -15,7 +15,8 @@
     "minify": "bun -e 'import fs from \"fs\"; fs.writeFileSync(\"public/countries.min.geojson\", JSON.stringify(JSON.parse(fs.readFileSync(\"data/countries.geojson\"))))'",
     "db:build": "bun tsx scripts/build-db.ts",
     "db:see": "bun tsx scripts/see.ts",
-    "db:tsv": "bun tsx scripts//build-tsv-db.ts"
+    "db:tsv": "bun tsx scripts//build-tsv-db.ts",
+    "build:fallback-map": "tsx scripts/build-fallback-lang-map.tsx"
   },
   "devDependencies": {
     "@solidjs/testing-library": "^0.8.10",
