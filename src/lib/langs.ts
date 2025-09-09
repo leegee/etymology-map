@@ -10,24 +10,56 @@ export type Language = {
     yearRange: [number, number];
 };
 
-export const getLanguage = (langCode: string): Language => {
-    const lang = languages[langCode];
+export const getLanguage = (codeOrName: string): Language => {
+    let lang: Language | undefined;
+
+    // 1. Try direct match in our canonical langs
+    lang = languages[codeOrName];
+
+    // 2. Fallback mapping (e.g., gem-bi → pgm)
+    if (!lang && fallbackLangMap[codeOrName]) {
+        lang = languages[fallbackLangMap[codeOrName]];
+    }
+
+    // 3. Check ISO-639-3 (match by code or English name)
     if (!lang) {
-        logger.warn('No language entry for code ' + lang);
+        const isoEntry = iso6393.find(
+            e =>
+                e.iso6393 === codeOrName ||
+                e.name.toLowerCase() === codeOrName.toLowerCase()
+        );
+        if (isoEntry) {
+            const mapped = fallbackLangMap[isoEntry.iso6393] || isoEntry.iso6393;
+            lang = languages[mapped];
+        }
+    }
+
+    // 4. Match by English name in langs.languages
+    if (!lang) {
+        lang = Object.values(languages).find(
+            l => l.englishName.toLowerCase() === codeOrName.toLowerCase()
+        );
+    }
+
+    // 5. If still missing, return stub + warn
+    if (!lang) {
+        logger.warn("No language entry for code or name " + codeOrName);
         return {
-            flag: '',
-            englishName: langCode,
-            nativeName: langCode,
+            flag: "",
+            englishName: codeOrName,
+            nativeName: codeOrName,
             coords: [0, 0],
-            countryCode: langCode,
-            yearRange: [0, 0]
+            countryCode: codeOrName,
+            yearRange: [0, 0],
         };
     }
+
+    // Normalize open-ended year ranges
     if (lang.yearRange[0] === 9999) lang.yearRange[0] = new Date().getFullYear();
     if (lang.yearRange[1] === 9999) lang.yearRange[1] = new Date().getFullYear();
 
     return lang;
-}
+};
 
 // Exposed only for build-db scripts
 export const languages: Record<string, Language> = {
