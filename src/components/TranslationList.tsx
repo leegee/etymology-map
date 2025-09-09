@@ -1,6 +1,6 @@
 import { Show } from "solid-js";
 import { getLanguage } from "../lib/langs";
-import { WorldLink } from "../types";
+import type { WorldLink } from "../types";
 
 type Props = {
     wordLinks: WorldLink[];

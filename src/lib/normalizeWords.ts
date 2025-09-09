@@ -1,4 +1,4 @@
-import { SubjectDefinition, WorldLink } from "../types";
+import type { SubjectDefinition, WorldLink } from "../types";
 import { getLanguage } from "./langs";
 
 

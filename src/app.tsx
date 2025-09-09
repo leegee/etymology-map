@@ -1,5 +1,5 @@
-import { createSignal, createMemo, onMount, createEffect } from "solid-js";
-import { WorldLink, SubjectDefinition } from "./types";
+import { createSignal, createMemo, onMount } from "solid-js";
+import type { WorldLink, SubjectDefinition } from "./types";
 import WordSearch from "./components/WordSearch";
 import GeoMap from "./components/Map";
 import CenturySlider from "./components/CenturySlider";

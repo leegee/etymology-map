@@ -1,4 +1,4 @@
-import { onMount, onCleanup, createEffect, createSignal, For, JSX } from "solid-js";
+import { onMount, onCleanup, createEffect, createSignal, For, type JSX } from "solid-js";
 import { Portal, render } from "solid-js/web";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -197,7 +197,7 @@ export default function GeoMap(props: Props) {
                                 <For each={currentSubjects}>
                                     {(def) => (
                                         <>
-                                            <nav class={styles.etymologyHeader}>
+                                            <nav class={styles.etymologyHeader + ' sticky'}>
                                                 <h5 class="max left-align bottom-padding">
                                                     {def.word}
                                                     &nbsp;

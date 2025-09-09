@@ -1,13 +1,11 @@
-import { Component } from "solid-js";
-
-type Props = {
+interface AllCenturiesToggleProps {
     value: boolean;
     onChange: (val: boolean) => void;
     label?: string;
     disabled?: boolean;
 };
 
-const AllCenturiesToggle: Component<Props> = (props) => {
+export default function AllCenturiesToggle(props: AllCenturiesToggleProps) {
     return (
         <div class="field small-padding top-padding">
             <label class="switch icon">
@@ -27,4 +25,3 @@ const AllCenturiesToggle: Component<Props> = (props) => {
     );
 };
 
-export default AllCenturiesToggle;

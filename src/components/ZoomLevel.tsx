@@ -1,12 +1,10 @@
-import { Component } from "solid-js";
-
-type Props = {
+interface ZoomLevelProps {
     value: number;
     disabled: boolean;
     onChange: (val: number) => void;
 };
 
-const ZoomLevel: Component<Props> = (props) => {
+export default function ZoomLevel(props: ZoomLevelProps) {
     return (
         <div class="field">
             <label class="slider medium">
@@ -30,4 +28,3 @@ const ZoomLevel: Component<Props> = (props) => {
     );
 };
 
-export default ZoomLevel;

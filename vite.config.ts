@@ -1,6 +1,6 @@
 import solid from "vite-plugin-solid";
 import { defineConfig } from "vite";
-import packageJson from "./package.json" assert { type: "json" };
+import packageJson from "./package.json";
 
 console.log('Name:', packageJson.name);
 

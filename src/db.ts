@@ -1,4 +1,4 @@
-import initSqlJs, { Database as SQLDatabase, Statement } from "sql.js";
+import initSqlJs, { type Database as SQLDatabase } from "sql.js";
 import { httpLogger } from "./logger";
 import packageJson from "../package.json" assert { type: "json" };
 
@@ -24,7 +24,7 @@ async function loadDB() {
     isLoading = true;
 
     const SQL = await initSqlJs({
-        locateFile: (file) => `${urlRoot}/sql-wasm/sql-wasm.wasm`,
+        locateFile: () => `${urlRoot}/sql-wasm/sql-wasm.wasm`,
     });
 
     const buffer = await fetch(`${urlRoot}/data/words.db`).then((res) =>

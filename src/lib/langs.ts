@@ -1,4 +1,10 @@
+import { iso6393 } from "iso-639-3";
 import { logger } from "../logger";
+import rawFallbackLangMap from './lang-key-mappings.json';
+
+export const langKeyToDbCode: Record<string, string> = rawFallbackLangMap.langKeyToDbCode;
+export const dbCodeToLangKey: Record<string, string> = rawFallbackLangMap.dbCodeToLangKey;
+export const fallbackLangMap: Record<string, string> = rawFallbackLangMap.fallback;
 
 export type Language = {
     flag: string;
@@ -6,22 +12,22 @@ export type Language = {
     nativeName: string;
     coords: [number, number];
     countryCode: string;
-    useFlag?: boolean; // Flags if we need to use the flag field when the flag-icons package won't generate a flag from the country code
+    useFlag?: boolean; // Use flag field if flag-icons package can't generate a flag from countryCode
     yearRange: [number, number];
 };
 
 export const getLanguage = (codeOrName: string): Language => {
     let lang: Language | undefined;
 
-    // 1. Try direct match in our canonical langs
+    // First try direct lookup by code
     lang = languages[codeOrName];
 
-    // 2. Fallback mapping (e.g., gem-bi → pgm)
+    // Fallback mapping (eg "gem-bi" to "pgm")
     if (!lang && fallbackLangMap[codeOrName]) {
         lang = languages[fallbackLangMap[codeOrName]];
     }
 
-    // 3. Check ISO-639-3 (match by code or English name)
+    // Then try ISO-639-3 
     if (!lang) {
         const isoEntry = iso6393.find(
             e =>
@@ -29,21 +35,21 @@ export const getLanguage = (codeOrName: string): Language => {
                 e.name.toLowerCase() === codeOrName.toLowerCase()
         );
         if (isoEntry) {
-            const mapped = fallbackLangMap[isoEntry.iso6393] || isoEntry.iso6393;
-            lang = languages[mapped];
+            const mappedCode = fallbackLangMap[isoEntry.iso6393] || isoEntry.iso6393;
+            lang = languages[mappedCode];
         }
     }
 
-    // 4. Match by English name in langs.languages
+    // Getting desparate, lookup by English name in languages
     if (!lang) {
         lang = Object.values(languages).find(
             l => l.englishName.toLowerCase() === codeOrName.toLowerCase()
         );
     }
 
-    // 5. If still missing, return stub + warn
+    // Maybe fail? Stub atm
     if (!lang) {
-        logger.warn("No language entry for code or name " + codeOrName);
+        logger.warn(`No language entry for code or name "${codeOrName}"`);
         return {
             flag: "",
             englishName: codeOrName,
@@ -54,14 +60,14 @@ export const getLanguage = (codeOrName: string): Language => {
         };
     }
 
-    // Normalize open-ended year ranges
-    if (lang.yearRange[0] === 9999) lang.yearRange[0] = new Date().getFullYear();
+    // Fix yearRange if placeholder 9999 is used
+    if (lang.yearRange[0] === 9999) lang.yearRange[0] = new Date().getFullYear() * -1;
     if (lang.yearRange[1] === 9999) lang.yearRange[1] = new Date().getFullYear();
 
     return lang;
 };
 
-// Exposed only for build-db scripts
+
 export const languages: Record<string, Language> = {
     en: { flag: "🇬🇧", englishName: "English", nativeName: "English", coords: [51.5074, -2], countryCode: "gb", yearRange: [1500, 9999] },
     de: { flag: "🇩🇪", englishName: "German", nativeName: "Deutsch", coords: [51.1657, 10.4515], countryCode: "de", yearRange: [1050, 9999] },
