@@ -30,13 +30,13 @@ export default function GeoMap(props: Props) {
         markerEl.className = styles["map-marker"];
         markerEl.style.cursor = "default";
 
-        render(content, markerEl);
-
         const marker = new maplibregl.Marker({ element: markerEl })
             .setLngLat([lng, lat])
             .addTo(map!);
 
         markers.push(marker);
+
+        render(content, markerEl);
     };
 
     onMount(() => {
@@ -137,7 +137,7 @@ export default function GeoMap(props: Props) {
             addMarker(lang.coords[0], lang.coords[1], () => {
                 return (
                     <article class="fill small-padding" style={{ zoom: props.zoom }}>
-                        <div class="row top-align ${scroll}">
+                        <div class="row middle-align ${scroll}">
                             <div class="large">
                                 <h5 title={lang.englishName}>
                                     <FlagIcon langCode={langCode} />
