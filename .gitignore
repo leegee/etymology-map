@@ -19,16 +19,16 @@ app.config.timestamp_*.js
 .classpath
 *.launch
 .settings/
-
 .DS_Store
 Thumbs.db
-data/kaikki.org-dictionary-English.jsonl
 
+data/kaikki.org-dictionary-English.jsonl
 # The un-minified version:
 public/countries.geojson 
-
 tsconfig.tsbuildinfo
+*.tgz
 public/countries.geojson
 data/countries.geojson
-*.tgz
 data/etymwn.tsv
+data/etymwn_offline.db
+data/etymwn_offline.db-journal

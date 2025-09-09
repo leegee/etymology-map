@@ -1,6 +1,5 @@
 /**
- * Creates an SQLite DB of Gerard de Melo's etymwn.tsv
- * and lists langs that are not listed in iso-639-3
+ * Creates an SQLite DB of Gerard de Melo's etymwn.tsv and lists langs that are not listed in iso-639-3
  */
 
 import fs from "fs";
@@ -8,17 +7,19 @@ import readline from "readline";
 import Database from "better-sqlite3";
 import { iso6393 } from "iso-639-3"; // npm install iso-639-3
 
+// Paths
 const TSV_PATH = "./data/etymwn.tsv";
 const OFFLINE_DB_PATH = "./data/etymwn_offline.db";
 
-// Map ISO 639-3 codes for lookup
+// Load ISO 639-3 codes
 const iso3Map = Object.fromEntries(iso6393.map(l => [l.iso6393, l.iso6393]));
 const unknownLangs = new Set<string>();
 
+// Reset offline DB
 if (fs.existsSync(OFFLINE_DB_PATH)) fs.unlinkSync(OFFLINE_DB_PATH);
-const db = new Database(OFFLINE_DB_PATH);
+const offlineDB = new Database(OFFLINE_DB_PATH);
 
-db.exec(`
+offlineDB.exec(`
 CREATE TABLE words (
   id INTEGER PRIMARY KEY,
   word TEXT NOT NULL,
@@ -35,15 +36,16 @@ CREATE TABLE word_links (
 );
 `);
 
-const insertWord = db.prepare(`INSERT INTO words (word, lang, pos, etymology) VALUES (?, ?, ?, ?)`);
-const insertLink = db.prepare(`INSERT INTO word_links (word_id, linked_word, lang, type) VALUES (?, ?, ?, ?)`);
-const getWordId = db.prepare(`SELECT id FROM words WHERE word = ? AND lang = ?`);
+// Prepare statements
+const insertWord = offlineDB.prepare(`INSERT INTO words (word, lang, pos, etymology) VALUES (?, ?, ?, ?)`);
+const insertLink = offlineDB.prepare(`INSERT INTO word_links (word_id, linked_word, lang, type) VALUES (?, ?, ?, ?)`);
 
-async function importTSV() {
-  const rl = readline.createInterface({ input: fs.createReadStream(TSV_PATH), crlfDelay: Infinity });
-  let count = 0;
+// Cache to avoid repeated SELECTs
+const wordIdMap = new Map<string, number>();
 
-  for await (const line of rl) {
+// Transactional batch insert
+const insertBatch = offlineDB.transaction((batch: string[]) => {
+  for (const line of batch) {
     if (!line.trim() || line.startsWith("#")) continue;
 
     const [source, relation, target] = line.split("\t");
@@ -53,27 +55,56 @@ async function importTSV() {
     const [srcWordRaw, srcLangRaw] = source.split("_");
     const [tgtWordRaw, tgtLangRaw] = target.split("_");
 
+    if (!srcWordRaw || !tgtWordRaw) continue;
+
     // Resolve languages
     let srcLang = iso3Map[srcLangRaw] || "und";
     let tgtLang = iso3Map[tgtLangRaw] || "und";
     if (srcLang === "und") unknownLangs.add(srcLangRaw);
     if (tgtLang === "und") unknownLangs.add(tgtLangRaw);
 
-    // Ensure source word exists
-    let wordRow: any = getWordId.get(srcWordRaw, srcLang);
-    if (!wordRow) {
+    // Get or insert source word
+    const srcKey = `${srcWordRaw}_${srcLang}`;
+    let wordId = wordIdMap.get(srcKey);
+    if (!wordId) {
       const info = insertWord.run(srcWordRaw, srcLang, null, null);
-      wordRow = { id: Number(info.lastInsertRowid) };
+      wordId = Number(info.lastInsertRowid);
+      wordIdMap.set(srcKey, wordId);
     }
 
-    insertLink.run(wordRow.id, tgtWordRaw, tgtLang, "etymology");
-    count++;
+    // Insert link
+    insertLink.run(wordId, tgtWordRaw, tgtLang, "etymology");
+  }
+});
 
-    if (count % 10000 === 0) console.log(`Imported ${count} links...`);
+async function importTSV() {
+  const rl = readline.createInterface({ input: fs.createReadStream(TSV_PATH), crlfDelay: Infinity });
+  let batch: string[] = [];
+  let count = 0;
+  const batchSize = 10000;
+
+  for await (const line of rl) {
+    batch.push(line);
+    if (batch.length >= batchSize) {
+      insertBatch(batch);
+      count += batch.length;
+      console.log(`Imported ${count} lines...`);
+      batch = [];
+    }
   }
 
-  console.log(`# TSV import complete: ${count} links.`);
-  if (unknownLangs.size) console.log(`# Unknown languages:`, Array.from(unknownLangs).join(", "));
+  if (batch.length) {
+    insertBatch(batch);
+    count += batch.length;
+    console.log(`Imported ${count} lines...`);
+  }
+
+  console.log(`# TSV import complete.`);
+  console.log(`# Unknown languages:`, Array.from(unknownLangs).join(", "));
 }
 
-importTSV().catch(err => console.error(err));
+(async () => {
+  console.time("TSV import");
+  await importTSV();
+  console.timeEnd("TSV import");
+})();
