@@ -206,7 +206,7 @@ async function main() {
         const offlineDb = new Database(offlineDbPath, { readonly: true });
 
         const stmt = offlineDb.prepare("SELECT * FROM words");
-        for (const entry of stmt.iterate()) {
+        for (const entry: any of stmt.iterate()) {
             const wordLower = (entry.word || "").toLowerCase();
 
             let wordId: number | null = null;

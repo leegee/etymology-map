@@ -40,7 +40,7 @@ export default function WordLinkMarker(props: Props) {
                                         }></th>
 
                                         <td>
-                                            {tr.linked_word?.split(/;\s+/).map((word, i) => (
+                                            {tr.linked_word?.split(/;\s+/).map((word) => (
                                                 <a
                                                     title="View on Wiktionary"
                                                     class={styles["wiktionary-link"]}
