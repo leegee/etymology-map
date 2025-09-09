@@ -63,18 +63,6 @@ export default function App() {
     return rv;
   });
 
-  // Just use year_start
-  // const filteredwordLinks = createMemo(() => {
-  //   if (showAll()) return wordLinks();
-  //   return wordLinks()
-  //     .filter(t => {
-  //       const start = Number(t.year_start);
-  //       const [min] = dateRange();
-  //       return start >= min && start < min + 100;
-  //     })
-  //     .sort((a, b) => Number(a.year_start) - Number(b.year_start))
-  // });
-
   const handleSearch = async (q: string) => {
     ui("#welcome-snackbar", 0);
     ui("#error-snackbar", 0);
