@@ -197,11 +197,11 @@ export default function GeoMap(props: Props) {
                                 <For each={currentSubjects}>
                                     {(def) => (
                                         <>
-                                            <nav>
+                                            <nav class={styles.etymologyHeader}>
                                                 <h5 class="max left-align bottom-padding">
                                                     {def.word}
                                                     &nbsp;
-                                                    ({def.pos})
+                                                    <em>({def.pos})</em>
                                                     <br />
                                                     <small>
                                                         {def.year_start ?? ""}–{def.year_end ?? ""}
@@ -210,7 +210,9 @@ export default function GeoMap(props: Props) {
                                                 <button class="transparent link" onClick={() => setOpen(false)}><i>close</i></button>
                                             </nav>
 
-                                            <div class="bottom-padding scroll">{def.etymology}</div>
+                                            <div class={"bottom-padding scroll " + styles.etymology}>
+                                                {def.etymology?.split(/[\n\r\f]+/).map(text => (<p>{text}</p>))}
+                                            </div>
                                         </>
                                     )}
                                 </For>
