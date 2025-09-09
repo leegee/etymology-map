@@ -1,0 +1,4 @@
+.wiktionary-link:not(:last-of-type)::after {
+    content: ";";
+    margin-right: 0.3em;
+}

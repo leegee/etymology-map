@@ -54,10 +54,8 @@ export default function GeoMap(props: Props) {
         const bounds = new maplibregl.LngLatBounds();
         const grouped = groupWordLinksByLang(props.wordLinks);
 
-        // Highlight countries
         highlightCountries(props.subject, props.wordLinks, map);
 
-        // Add word-link markers
         Object.entries(grouped).forEach(([langCode, trs]) => {
             const lang = getLanguage(langCode);
             if (!lang) return;
@@ -67,13 +65,13 @@ export default function GeoMap(props: Props) {
             }
 
             addMarker(map!, markers, lang, () => (
-                <WordLinkMarker links={trs} langCode={langCode} zoom={props.zoom} />
+                <WordLinkMarker links={trs} lang={lang} langCode={langCode} zoom={props.zoom} />
             ));
         });
 
         addSubjectMarker(map!, markers, props.subject, bounds, props.zoom);
 
-        if (1 == 1 || props.lines) {
+        if (props.lines) {
             import("./GeoMap/lines").then(({ drawLines }) => drawLines(grouped, map!));
         }
 

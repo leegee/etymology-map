@@ -59,7 +59,7 @@ export function addSubjectMarker(
     render(() => (
         <>
             <article class="secondary" style={{ zoom }}>
-                <h4 title={langObj.countryCode} onClick={() => setOpen(true)}>
+                <h4 onClick={() => setOpen(true)}>
                     <FlagIcon langCode={subjects[0].lang} />
                     <div class="tooltip">{langObj.englishName} search subject</div>
                     &nbsp;

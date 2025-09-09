@@ -1,10 +1,13 @@
 import { For } from "solid-js";
+import styles from './WordLinkMarker.module.css';
 import type { WorldLink } from "../../types";
+import type { Language } from "../../lib/langs";
 import { yearLabel } from "../../lib/year-label";
 import FlagIcon from "../FlagIcon";
 
 type Props = {
     links: WorldLink[];
+    lang: Language;
     langCode: string;
     zoom: number;
 };
@@ -23,7 +26,7 @@ export default function WordLinkMarker(props: Props) {
                     <h5 title={props.langCode}>
                         <FlagIcon langCode={props.langCode} />
                     </h5>
-                    <div class="tooltip">{props.langCode}</div>
+                    <div class="tooltip">{props.lang.englishName}</div>
                 </div>
 
                 <div class={"small-width " + scrollClasses()}>
@@ -35,11 +38,20 @@ export default function WordLinkMarker(props: Props) {
                                         <th class="top-align" style={{ "word-break": "break-word" }} innerHTML={
                                             yearLabel(tr.year_start) + '–<br/>' + yearLabel(tr.year_end)
                                         }></th>
+
                                         <td>
-                                            <a title="View on Wiktionary" class="large" target="blank" href={`https://en.wiktionary.org/wiki/${tr.linked_word}#${props.langCode}`}>
-                                                {tr.linked_word}
-                                            </a>
+                                            {tr.linked_word?.split(/;\s+/).map((word, i) => (
+                                                <a
+                                                    title="View on Wiktionary"
+                                                    class={styles["wiktionary-link"]}
+                                                    target="_blank"
+                                                    href={`https://en.wiktionary.org/wiki/${word}#${props.langCode}`}
+                                                >
+                                                    {word}
+                                                </a>
+                                            ))}
                                         </td>
+
                                     </tr>
                                 )}
                             </For>
@@ -47,6 +59,6 @@ export default function WordLinkMarker(props: Props) {
                     </table>
                 </div>
             </div>
-        </article>
+        </article >
     );
 }
