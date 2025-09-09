@@ -3,7 +3,10 @@ import path from "path";
 import readline from "readline";
 import Database from "better-sqlite3";
 import { DB_FILE_PATH } from "../src/config";
-import { languages } from "../src/lib/langs";
+import { fallbackLangMap, languages } from "../src/lib/langs";
+
+// from the etymwn TSV
+const offlineDbPath = path.resolve("./data/etymwn_offline.db");
 
 // Load allowed words
 const inputFile = path.resolve("./data/google-10000-english.txt");
@@ -166,7 +169,7 @@ const insertBatch = db.transaction((entries: any[]) => {
 
 
 async function main() {
-    const rl = readline.createInterface({
+    const jsonlReadline = readline.createInterface({
         input: fs.createReadStream("./data/kaikki.org-dictionary-English.jsonl"),
         crlfDelay: Infinity
     });
@@ -177,9 +180,9 @@ async function main() {
     let totalwordLinks = 0;
     let linesProcessed = 0;
 
-    for await (const line of rl) {
+    for await (const line of jsonlReadline) {
         linesProcessed++;
-        if (linesProcessed % 1000 === 0) console.log(`Read ${linesProcessed} lines...`);
+        if (linesProcessed % 10000 === 0) console.log(`Read ${linesProcessed} lines...`);
         try {
             const entry = JSON.parse(line);
             if (targetPOS.length && !targetPOS.includes(entry.pos)) continue;
@@ -197,11 +200,57 @@ async function main() {
         }
     }
 
+    // Augment from etymwn TSV
+    if (fs.existsSync(offlineDbPath)) {
+        console.log("Augmenting DB from etymwn_offline.db...");
+        const offlineDb = new Database(offlineDbPath, { readonly: true });
+
+        const stmt = offlineDb.prepare("SELECT * FROM words");
+        for (const entry of stmt.iterate()) {
+            const wordLower = (entry.word || "").toLowerCase();
+
+            let wordId: number | null = null;
+
+            // Only insert main words if allowed
+            if (allowedWords.has(wordLower)) {
+                const rawLang = (entry.lang || "english").trim().toLowerCase().replace(/\s+/g, "");
+                const isoLang =
+                    Object.keys(languages).find(c => languages[c].englishName.toLowerCase() === rawLang) || "en";
+
+                const info = insertWord.run(
+                    entry.word,
+                    isoLang,
+                    entry.pos,
+                    entry.etymology
+                );
+                wordId = info.lastInsertRowid;
+            }
+
+            // Parse etymology stages
+            const stages = parseEtymology(entry.etymology);
+
+            // Insert linked words and cognates regardless
+            if (wordId !== null) {
+                stages.forEach(stage => {
+                    insertLinkedWord.run(wordId, stage.word, stage.lang);
+                });
+            }
+
+            if (entry.cognates?.length) {
+                entry.cognates.forEach(cog => {
+                    if (wordId !== null) insertCognate.run(wordId, cog, "??");
+                });
+            }
+        }
+
+    }
     if (batch.length > 0) {
         const res = insertBatch(batch);
         totalWords += res.wordsInserted;
         totalwordLinks += res.wordLinksInserted;
-        console.log(`Final batch inserted: ${res.wordsInserted} words, ${res.wordLinksInserted} wordLinks`);
+        if (totalWords % 1000) {
+            console.log(`Final batch inserted: ${res.wordsInserted} words, ${res.wordLinksInserted} wordLinks`);
+        }
     }
 
     db.prepare(`VACUUM;`).run();
