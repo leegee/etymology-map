@@ -254,7 +254,7 @@ export const languages: Record<string, Language> = {
     krl: { flag: "🇫🇮", englishName: "Karelian", nativeName: "Karjala", coords: [62.0, 32.0], countryCode: "fi", yearRange: [1500, 9999] },
     ks: { flag: "🇮🇳", englishName: "Kashmiri", nativeName: "कश्मीरी", coords: [34.0, 75.0], countryCode: "in", yearRange: [1400, 9999] },
     kum: { flag: "🇷🇺", englishName: "Kumyk", nativeName: "Къумукъ", coords: [43.0, 46.0], countryCode: "ru", yearRange: [1500, 9999] },
-    kw: { flag: "🏴", englishName: "Cornish", nativeName: "Kernowek", coords: [50.5, -5], countryCode: "gb", yearRange: [1000, 9999] },
+    kw: { flag: "〓〓", englishName: "Cornish", nativeName: "Kernowek", coords: [50.5, -5], countryCode: "gb", yearRange: [1000, 9999], useFlag: true },
     kxd: { flag: "🇨🇳", englishName: "Kemedzung", nativeName: "Kemedzung", coords: [29.0, 102.0], countryCode: "cn", yearRange: [1500, 9999] },
     ky: { flag: "🇰🇬", englishName: "Kyrgyz", nativeName: "Кыргызча", coords: [41.2044, 74.7661], countryCode: "kg", yearRange: [1200, 9999] },
     lad: { flag: "🇮🇱", englishName: "Ladino", nativeName: "Ladino", coords: [32.0, 35.0], countryCode: "il", yearRange: [1500, 9999] },
