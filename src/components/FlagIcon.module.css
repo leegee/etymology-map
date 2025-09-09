@@ -2,6 +2,7 @@
     background: oldlace;
     color: black;
     min-width: 1.5em;
+    line-height: 150%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
