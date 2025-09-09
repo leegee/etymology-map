@@ -1,12 +1,13 @@
-import { onMount, onCleanup, createEffect, createSignal, For, JSX, Switch, Match } from "solid-js";
+import { onMount, onCleanup, createEffect, createSignal, For, JSX } from "solid-js";
 import { Portal, render } from "solid-js/web";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import styles from "./Map.module.css";
-import { languages } from "../lib/langs";
 import type { WorldLink, SubjectDefinition } from "../types";
+import { languages } from "../lib/langs";
 import { yearLabel } from "../lib/year-label";
+import FlagIcon from "./FlagIcon";
 
 // Don't include in zoom-to-bounds, as it skews the lovely northern map view
 const IGNORE_SOUTH_AFRICA = true;
@@ -119,6 +120,7 @@ export default function GeoMap(props: Props) {
 
         // Add linked_word markers
         Object.entries(grouped).forEach(([langCode, trs]) => {
+            console.log(trs)
             const lang = languages[langCode];
             if (!lang) return;
 
@@ -138,11 +140,7 @@ export default function GeoMap(props: Props) {
                         <div class="row top-align ${scroll}">
                             <div class="large">
                                 <h5 title={lang.englishName}>
-                                    <Switch fallback={<span class={styles["icon-flag"]}>{lang.flag}</span>}>
-                                        <Match when={lang.countryCode !== 'xx' && !lang.useFlag}>
-                                            <span class={`fi fi-${lang.countryCode}`}></span>
-                                        </Match>
-                                    </Switch>
+                                    <FlagIcon langCode={langCode} />
                                 </h5>
                                 <div class="tooltip">{lang.englishName}</div>
                             </div>
@@ -187,7 +185,7 @@ export default function GeoMap(props: Props) {
                     <>
                         <article class="secondary" style={{ zoom: props.zoom }}>
                             <h4 title={defLang.countryCode} onClick={() => setOpen(true)}>
-                                <span class={`fi fi-${defLang.countryCode}`}></span>
+                                <FlagIcon langCode={currentSubjects[0].lang} />
                                 <div class="tooltip">{defLang.englishName} search subject</div>
                                 &nbsp;
                                 {currentSubjects.map(s => s.word).join(', ')}

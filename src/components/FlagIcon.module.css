@@ -1,0 +1,8 @@
+.icon-flag {
+    background: oldlace;
+    color: black;
+    min-width: 1.5em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
