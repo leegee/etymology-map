@@ -87,7 +87,7 @@ export default function App() {
     <>
       <Portal mount={document.body}>
         <div id="welcome-snackbar" class="snackbar primary max center-align">
-          <div class="max">Enter a word for which to search; click a word for more details.</div>
+          <div class="max">Enter a word for which to search; click a word for more details. Toggle 'all' to use the time slider.</div>
           <a class="inverse-link"><i>close</i></a>
         </div>
 
