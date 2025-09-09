@@ -65,7 +65,6 @@ export const getLanguage = (codeOrName: string): Language => {
         lang.yearRange[0] = new Date().getFullYear() * -1;
     }
     if (lang.yearRange[1] === 9999) {
-        console.log(JSON.stringify(lang.yearRange))
         lang.yearRange[1] = new Date().getFullYear();
     }
 
