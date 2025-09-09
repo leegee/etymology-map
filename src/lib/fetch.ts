@@ -64,7 +64,7 @@ export async function fetchWords(word: string): Promise<WordsResponse> {
     const wordRow = wordRows[0];
     const wordLinksRaw = await stmtFindwordLinks.all(wordRow.id);
 
-    // logger.debug('fetchWords got linked_word rows', wordLinksRaw);
+    logger.debug('fetchWords got linked_word rows', wordLinksRaw);
 
     const wordLinks = normalizeWords(wordLinksRaw);
     const subject = normaliseSubjects([wordRow]);
