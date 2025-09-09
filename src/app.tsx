@@ -50,26 +50,30 @@ export default function App() {
   });
 
 
-  // const filteredwordLinks = createMemo(() =>
-  //   wordLinks().filter(t => {
-  //     const start = Number(t.year_start) || 0;
-  //     let end = Number(t.year_end) || currentYear;
-  //     const [min, max] = dateRange();
-  //     return start <= max && end >= min;
-  //   })
-  // );
-
-  // Just use year_start
   const filteredwordLinks = createMemo(() => {
     if (showAll()) return wordLinks();
-    return wordLinks()
-      .filter(t => {
-        const start = Number(t.year_start);
-        const [min] = dateRange();
-        return start >= min && start < min + 100;
-      })
-      .sort((a, b) => Number(a.year_start) - Number(b.year_start))
+    const [year] = dateRange();
+    const centuryStart = year;
+    const centuryEnd = year + 99;
+    const rv = wordLinks().filter(t => {
+      const start = Number(t.year_start);
+      const end = Number(t.year_end);
+      return start <= centuryEnd && end >= centuryStart;
+    });
+    return rv;
   });
+
+  // Just use year_start
+  // const filteredwordLinks = createMemo(() => {
+  //   if (showAll()) return wordLinks();
+  //   return wordLinks()
+  //     .filter(t => {
+  //       const start = Number(t.year_start);
+  //       const [min] = dateRange();
+  //       return start >= min && start < min + 100;
+  //     })
+  //     .sort((a, b) => Number(a.year_start) - Number(b.year_start))
+  // });
 
   const handleSearch = async (q: string) => {
     ui("#welcome-snackbar", 0);

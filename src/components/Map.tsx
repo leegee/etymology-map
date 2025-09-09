@@ -51,6 +51,9 @@ export default function GeoMap(props: Props) {
     createEffect(() => {
         if (!map) return;
 
+        markers.forEach(m => m.remove());
+        markers.length = 0;
+
         const bounds = new maplibregl.LngLatBounds();
         const grouped = groupWordLinksByLang(props.wordLinks);
 
