@@ -39,7 +39,9 @@ function parseEtymology(etymologyText: string) {
         .map(s => s.trim())
         .filter(Boolean);
 
-    const allTokens = [...tokens, ...parenMatches];
+    const allTokens = [...tokens, ...parenMatches]
+        .map(t => t.trim())
+        .filter(t => t && !/^[;,.]+$/.test(t));
 
     allTokens.forEach(token => {
         const match = token.match(/(?:from\s+)?([A-Za-z\- ]+?)\s+([^\s][A-Za-z0-9’'’\-]+)/i);
@@ -89,7 +91,7 @@ CREATE TABLE IF NOT EXISTS cognates (
 const insertWord = db.prepare(
     `INSERT INTO words (word, lang, pos, etymology) VALUES (?, ?, ?, ?)`
 );
-const insertTrans = db.prepare(
+const insertLinkedWord = db.prepare(
     `INSERT INTO word_links (word_id, linked_word, lang) VALUES (?, ?, ?)`
 );
 const insertCognate = db.prepare(
@@ -151,7 +153,7 @@ const insertBatch = db.transaction((entries: any[]) => {
             // Skip wordLinks that match the subject language
             if (subjectLangs.has(stage.lang)) return;
 
-            insertTrans.run(wordId, stage.word, stage.lang);
+            insertLinkedWord.run(wordId, stage.word, stage.lang);
             wordLinksInserted++;
 
             if (!usedLangs.has(stage.lang)) usedLangs.set(stage.lang, { words: 0, wordLinks: 0 });
