@@ -29,6 +29,7 @@ export default function GeoMap(props: Props) {
             container: mapContainer!,
             center: [5, 60],
             zoom: 4,
+            maxZoom: 5,
             dragPan: true,
             dragRotate: true,
             scrollZoom: true,

@@ -73,5 +73,12 @@ export const stmtFindPrefix = lazyPrepare(
 export const stmtFindwordLinks = lazyPrepare(
     "SELECT * FROM word_links WHERE word_id = ?"
 );
+export const stmtFindLike = lazyPrepare(`
+    SELECT DISTINCT w.word
+    FROM words w
+    JOIN word_links wl ON wl.word_id = w.id
+    WHERE LOWER(w.word) LIKE LOWER(?)
+    LIMIT 1`
+)
 
 export { loadDB };

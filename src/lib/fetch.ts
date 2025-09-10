@@ -1,5 +1,5 @@
 import { logger } from "../logger";
-import { stmtFindExact, stmtFindwordLinks } from "../db";
+import { stmtFindExact, stmtFindwordLinks, stmtFindLike } from "../db";
 import { normalizeWords, normaliseSubjects } from "./normalizeWords";
 
 export const STATIC_BASE = "/static-data";
@@ -70,4 +70,20 @@ export async function fetchWords(word: string): Promise<WordsResponse> {
     const subject = normaliseSubjects([wordRow]);
 
     return { subject, wordLinks };
+}
+
+
+export async function fetchAutocompleteWords(query: string): Promise<string[]> {
+    logger.debug('fetchAutocompleteWords enter with', query);
+
+    if (!query || query.trim() === '') {
+        return [];
+    }
+
+    const wordRows = await stmtFindLike.all(`${query}%`);
+    logger.debug('fetchAutocompleteWords got wordRows', wordRows);
+
+    if (!wordRows.length) return [];
+
+    return wordRows.map(row => row.word);
 }

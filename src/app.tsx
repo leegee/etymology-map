@@ -1,11 +1,11 @@
-import { createSignal, createMemo, onMount } from "solid-js";
+import { createSignal, createMemo, onMount, createEffect } from "solid-js";
 import type { WorldLink, SubjectDefinition } from "./types";
 import WordSearch from "./components/WordSearch";
 import GeoMap from "./components/Map";
 import CenturySlider from "./components/CenturySlider";
 import AllCenturiesToggle from "./components/AllCenturiesToggle";
 import ZoomLevel from "./components/ZoomLevel";
-import { fetchWords } from "./lib/fetch";
+import { fetchAutocompleteWords, fetchWords } from "./lib/fetch";
 import { Portal } from "solid-js/web";
 
 export default function App() {
@@ -16,13 +16,13 @@ export default function App() {
   const [sliderIndex, setSliderIndex] = createSignal(0);
   const [searchTerm, setSearchTerm] = createSignal('');
 
+  let firstInput = false;
   const currentYear = new Date().getFullYear();
 
   // createEffect(() => {
   //   console.log('years', availableYears());
   //   console.log('links', wordLinks());
   // });
-
 
   const availableYears = createMemo(() => {
     const set = new Set<number>();
@@ -63,6 +63,7 @@ export default function App() {
     return rv;
   });
 
+
   const handleSearch = async (q: string) => {
     ui("#welcome-snackbar", 0);
     ui("#error-snackbar", 0);
@@ -83,6 +84,13 @@ export default function App() {
     setTimeout(() => ui("#welcome-snackbar", 0), 10_000);
   });
 
+  createEffect(() => {
+    if (firstInput && subject().length > 0) {
+      ui("#error-snackbar", 0);
+      firstInput = false;
+    }
+  })
+
   return (
     <>
       <Portal mount={document.body}>
@@ -101,7 +109,7 @@ export default function App() {
           onChange={(real: number) => setZoomLevel(real)}
         />
 
-        <WordSearch onSearch={handleSearch} />
+        <WordSearch onSearch={handleSearch} fetchSuggestions={fetchAutocompleteWords} />
 
         <AllCenturiesToggle
           disabled={!subject().length}

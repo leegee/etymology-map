@@ -23,5 +23,5 @@ export const logger = console;
 export const httpLogger = console;
 
 logger.debug = () => void (0);
-httpLogger.debug = () => void (0);
+// httpLogger.debug = () => void (0);
 
