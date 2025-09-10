@@ -1,2 +1,3 @@
-{"prompt": "Extract etymology from: Word: apple. Definition: A fruit that grows on trees.", "completion": " From Old English æppel, related to Dutch appel"}
-{"prompt": "Extract etymology from: Word: banana. Definition: A tropical fruit.", "completion": " From Wolof banana"}
+{"prompt": "Extract etymology from: Word: banana. Definition: A tropical fruit.", "completion": " banana < Wolof 'banana'"}
+{"prompt": "Extract etymology from: Word: April. Definition: From Middle English apprile, Aprill, re-Latinised from Middle English aueril, from Old French avrill, from Latin Aprīlis (“of the month of the goddess Venus”), perhaps based on Etruscan 𐌀𐌐𐌓𐌖 (apru), from Ancient Greek Ἀφροδίτη (Aphrodítē, “Venus”). Displaced native Old English ēastermōnaþ (literally “Easter month”).", "completion": " April < Middle English 'apprille' < Middle English 'aueril' < Old French 'avrill' < Latin 'Aprilis' < Etruscan '𐌀𐌐𐌓𐌖' ('apru') < Ancient Greek 'Ἀφροδίτη' (('Aphrodítē', 'Venus')"}
+
