@@ -1,4 +1,4 @@
-import { createSignal, createMemo, onMount, createEffect } from "solid-js";
+import { createSignal, createMemo, onMount, Show } from "solid-js";
 import type { WorldLink, SubjectDefinition } from "./types";
 import WordSearch from "./components/WordSearch";
 import GeoMap from "./components/Map";
@@ -8,6 +8,8 @@ import ZoomLevel from "./components/ZoomLevel";
 import { fetchAutocompleteWords, fetchWords } from "./lib/fetch";
 import { Portal } from "solid-js/web";
 
+const GOOGLE_10K = true;
+
 export default function App() {
   const [wordLinks, setwordLinks] = createSignal<WorldLink[]>([]);
   const [subject, setSubject] = createSignal<SubjectDefinition[]>([]);
@@ -16,7 +18,6 @@ export default function App() {
   const [sliderIndex, setSliderIndex] = createSignal(0);
   const [searchTerm, setSearchTerm] = createSignal('');
 
-  let firstInput = false;
   const currentYear = new Date().getFullYear();
 
   // createEffect(() => {
@@ -84,13 +85,6 @@ export default function App() {
     setTimeout(() => ui("#welcome-snackbar", 0), 10_000);
   });
 
-  createEffect(() => {
-    if (firstInput && subject().length > 0) {
-      ui("#error-snackbar", 0);
-      firstInput = false;
-    }
-  })
-
   return (
     <>
       <Portal mount={document.body}>
@@ -99,7 +93,12 @@ export default function App() {
           <a class="inverse-link"><i>close</i></a>
         </div>
 
-        <div id="error-snackbar" class="snackbar error max center-align">The word "{searchTerm()}" is not in the list supported by this version.</div>
+        <div id="error-snackbar" class="snackbar error max center-align">
+          The word "{searchTerm()}" is not in the list supported by this version
+          <Show when={GOOGLE_10K}>
+            which only supports <a href="https://github.com/first20hours/google-10000-english/blob/master/google-10000-english.txt" target="_blank">Google's top 10,000 words</a>.
+          </Show>
+        </div>
       </Portal>
 
       <nav class="bottom">
