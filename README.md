@@ -8,15 +8,18 @@ Uses `sql.js` to host a database of [Google Top 10,000 Words](https://raw.github
 
 ## Use
 
+```bash
     mkdir data
-    curl -L -o data/raw-wiktextract-data.jsonl \
-        https://huggingface.co/datasets/aletrn/wiktionary/resolve/main/raw-wiktextract-data.jsonl
+    curl -L -o data/raw-wiktextract-data.jsonl https://huggingface.co/datasets/aletrn/wiktionary/resolve/main/raw-wiktextract-data.jsonl
+    curl -L http://etym.org/etymwn-20130208.zip -o etymwn.zip && unzip -p etymwn.zip etymwn-20130208/etymwn.tsv > data/etymwn.tsv
     bun db:build
 
     bun dev
 
     bun build
+
     bun deploy
+```
 
 [![Screenshot](./README.png)](https://leegee.github.io/etymology-map/)
 
