@@ -35,3 +35,6 @@ data/etymwn_offline.db-journal
 
 python/etymology-venv
 python/etymology-lora
+python/__pycache__
+
+public/data/words.db-journal
