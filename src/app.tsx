@@ -81,8 +81,12 @@ export default function App() {
   };
 
   onMount(() => {
-    ui("#welcome-snackbar");
-    setTimeout(() => ui("#welcome-snackbar", 0), 10_000);
+    const seen = Number(localStorage.getItem('etymology-map-seen')) || 0;
+    if (seen < 3) {
+      localStorage.setItem('etymology-map-seen', String(seen + 1));
+      ui("#welcome-snackbar");
+      setTimeout(() => ui("#welcome-snackbar", 0), 10_000);
+    }
   });
 
   return (
