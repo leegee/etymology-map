@@ -6,27 +6,16 @@ const tsvDb = new Database(OFFLINE_DB_PATH, { readonly: true });
 
 const q = process.argv[2]?.trim() || "cat";
 
-let words: any[] = db
-    .prepare("SELECT * FROM words WHERE LOWER(word) = LOWER(?) LIMIT 1")
-    .all(q);
+const words = db.prepare("SELECT * FROM words WHERE LOWER(word) = LOWER(?)").all(q);
 
+const wordLinksStmt = db.prepare("SELECT * FROM word_links WHERE word_id = ?");
+const links = words.flatMap((w: any) => wordLinksStmt.all(w.id));
 
-const links: any[] = [];
-for (const w of words) {
-    const trans = db
-        .prepare("SELECT * FROM word_links WHERE word_id = ?")
-        .all(w.id);
-    links.push(...trans);
-}
-
-console.log("Words:", words);
+console.log("Words:", JSON.stringify(words, null, 4));
 console.log("Translations:", JSON.stringify(links, null, 4));
 
-
-let tsvWords: any[] = tsvDb
-    .prepare("SELECT * FROM words WHERE LOWER(word) = LOWER(?) LIMIT 1")
-    .all(q);
-
-console.log("TSV Words:", tsvWords);
+const tsvWords = tsvDb.prepare("SELECT * FROM words WHERE LOWER(word) = LOWER(?) LIMIT 1").all(q);
+console.log("TSV Words:", JSON.stringify(tsvWords, null, 4));
 
 db.close();
+tsvDb.close();
