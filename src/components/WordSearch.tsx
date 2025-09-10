@@ -64,14 +64,14 @@ export default function WordSearch(props: Props) {
                     <i class="front">search</i>
 
                     <input name="ghost-input-for-autosuggest"
-                        class={styles["ghost-input"]}
+                        class={`lower  ${styles["ghost-input"]}`}
                         tabindex={-1}
                         disabled
                         value={suggestion()}
                     />
 
                     <input name="real-input"
-                        class={`${styles["real-input"]} ${value() && !suggestion() ? styles['no-suggestion'] : ''}`}
+                        class={`lower ${styles["real-input"]} ${value() && !suggestion() ? styles['no-suggestion'] : ''}`}
                         type="search"
                         autocomplete="off"
                         placeholder="Enter an English word"

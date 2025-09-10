@@ -1,3 +1,4 @@
+import { Show } from "solid-js";
 import { yearLabel } from "../lib/year-label";
 
 type Props = {
@@ -27,7 +28,9 @@ export default function CenturySlider(props: Props) {
                 onClick={() => changeValue(-1)}
             >
                 <i>arrow_back</i>
-                <div class="tooltip">{yearLabel(props.years[0])}</div>
+                <Show when={!props.disabled}>
+                    <div class="tooltip">{yearLabel(props.years[0])}</div>
+                </Show>
             </button>
 
             <div class="row">
@@ -54,12 +57,16 @@ export default function CenturySlider(props: Props) {
                 onClick={() => changeValue(1)}
             >
                 <i>arrow_forward</i>
-                <div class="tooltip">{yearLabel(props.years[props.years.length - 1])}</div>
+                <Show when={!props.disabled}>
+                    <div class="tooltip">{yearLabel(props.years[props.years.length - 1])}</div>
+                </Show>
             </button>
 
-            <div class="tooltip">
-                {yearLabel(props.years[props.value])}
-            </div>
+            <Show when={!props.disabled}>
+                <div class="tooltip">
+                    {yearLabel(props.years[props.value])}
+                </div>
+            </Show>
         </fieldset>
     );
 }

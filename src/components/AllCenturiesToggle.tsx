@@ -1,3 +1,5 @@
+import { Show } from "solid-js";
+
 interface AllCenturiesToggleProps {
     value: boolean;
     onChange: (val: boolean) => void;
@@ -20,7 +22,9 @@ export default function AllCenturiesToggle(props: AllCenturiesToggleProps) {
                 </span>
             </label>
             <span class="helper">All</span>
-            <div class="tooltip">All at once or chronologically</div>
+            <Show when={!props.disabled}>
+                <div class="tooltip">All at once or chronologically</div>
+            </Show>
         </div>
     );
 };
