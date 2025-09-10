@@ -32,3 +32,6 @@ data/countries.geojson
 data/etymwn.tsv
 data/etymwn_offline.db
 data/etymwn_offline.db-journal
+
+python/etymology-venv
+python/etymology-lora
