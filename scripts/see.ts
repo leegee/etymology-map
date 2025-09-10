@@ -27,6 +27,6 @@ let tsvWords: any[] = tsvDb
     .prepare("SELECT * FROM words WHERE LOWER(word) = LOWER(?) LIMIT 1")
     .all(q);
 
-console.log("Words:", tsvWords);
+console.log("TSV Words:", tsvWords);
 
 db.close();
