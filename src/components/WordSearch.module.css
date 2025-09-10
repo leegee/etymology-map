@@ -21,3 +21,7 @@
     color: white !important;
     z-index: 2;
 }
+
+.no-suggestion {
+    border-color: #F00 !important;
+}

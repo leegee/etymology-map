@@ -23,7 +23,6 @@ export default function WordSearch(props: Props) {
     const handleInput = async (e: Event) => {
         const val = (e.target as HTMLInputElement).value;
         setValue(val);
-
         if (val.trim()) {
             const results = await props.fetchSuggestions(val.trim());
             if (results.length > 0) {
@@ -59,18 +58,20 @@ export default function WordSearch(props: Props) {
     onMount(() => inputRefToFocus?.focus());
 
     return (
-        <form onSubmit={submit}>
+        <form>
             <nav class="no-space medium-width center padding">
                 <div class={"field max border small prefix round fill active " + styles["search-container"]}>
                     <i class="front">search</i>
 
-                    <input class={styles["ghost-input"]}
+                    <input name="ghost-input-for-autosuggest"
+                        class={styles["ghost-input"]}
                         tabindex={-1}
                         disabled
                         value={suggestion()}
                     />
 
-                    <input class={styles["real-input"]}
+                    <input name="real-input"
+                        class={`${styles["real-input"]} ${value() && !suggestion() ? styles['no-suggestion'] : ''}`}
                         type="search"
                         autocomplete="off"
                         placeholder="Enter an English word"
