@@ -5,11 +5,11 @@
 import fs from "fs";
 import readline from "readline";
 import Database from "better-sqlite3";
-import { iso6393 } from "iso-639-3"; // npm install iso-639-3
+import { iso6393 } from "iso-639-3";
+import { OFFLINE_DB_PATH } from "../src/config";
 
 // Paths
 const TSV_PATH = "./data/etymwn.tsv";
-const OFFLINE_DB_PATH = "./data/etymwn_offline.db";
 
 // Load ISO 639-3 codes
 const iso3Map = Object.fromEntries(iso6393.map(l => [l.iso6393, l.iso6393]));

@@ -9,22 +9,16 @@ let words: any[] = db
     .prepare("SELECT * FROM words WHERE LOWER(word) = LOWER(?) LIMIT 1")
     .all(q);
 
-if (words.length === 0) {
-    words = db
-        .prepare("SELECT * FROM words WHERE LOWER(word) LIKE LOWER(?) LIMIT 50")
-        .all(`${q}%`);
+
+const links: any[] = [];
+for (const w of words) {
+    const trans = db
+        .prepare("SELECT * FROM word_links WHERE word_id = ?")
+        .all(w.id);
+    links.push(...trans);
 }
 
 console.log("Words:", words);
-
-const translations: any[] = [];
-for (const w of words) {
-    const trans = db
-        .prepare("SELECT * FROM translations WHERE word_id = ?")
-        .all(w.id);
-    translations.push(...trans);
-}
-
-console.log("Translations:", JSON.stringify(translations, null, 4));
+console.log("Translations:", JSON.stringify(links, null, 4));
 
 db.close();

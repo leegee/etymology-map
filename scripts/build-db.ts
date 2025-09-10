@@ -2,8 +2,16 @@ import fs from "fs";
 import path from "path";
 import readline from "readline";
 import Database, { Statement, RunResult } from "better-sqlite3";
-import { DB_FILE_PATH } from "../src/config";
+import { DB_FILE_PATH, OFFLINE_DB_PATH } from "../src/config";
 import { languages } from "../src/lib/langs";
+
+const google10000path = path.resolve("./data/google-10000-english.txt");
+
+if (fs.existsSync(DB_FILE_PATH)) fs.unlinkSync(DB_FILE_PATH);
+const db = new Database(DB_FILE_PATH);
+
+if (!fs.existsSync(OFFLINE_DB_PATH)) throw new Error('No offlined DB?');
+const offlineDb = new Database(OFFLINE_DB_PATH, { readonly: true });
 
 // Entry from Kaikki.org JSONL
 export type KaikkiEntry = {
@@ -22,27 +30,19 @@ export type EtymwnEntry = {
     cognates?: string[];
 };
 
-// Common Word entry type
 export type WordEntry = KaikkiEntry | EtymwnEntry;
 
-// Etymology parsing
 export type Stage = { word: string; lang: string };
 
-// Insert batch results
 export type InsertBatchResult = {
     wordsInserted: number;
     wordLinksInserted: number;
     cognatesInserted: number;
 };
 
-// ---------- Paths ----------
-const offlineDbPath = path.resolve("./data/etymwn_offline.db");
-const inputFile = path.resolve("./data/google-10000-english.txt");
-
-// ---------- Allowed words ----------
 const allowedWords = new Set(
     fs
-        .readFileSync(inputFile, "utf-8")
+        .readFileSync(google10000path, "utf-8")
         .split(/\r?\n/)
         .map((w) => w.trim().toLowerCase())
         .filter(Boolean)
@@ -99,9 +99,6 @@ function parseEtymology(etymologyText?: string): Stage[] {
 
     return stages;
 }
-
-if (fs.existsSync(DB_FILE_PATH)) fs.unlinkSync(DB_FILE_PATH);
-const db = new Database(DB_FILE_PATH);
 
 db.exec(`
 CREATE TABLE words (
@@ -243,49 +240,46 @@ async function main(): Promise<void> {
         }
     }
 
-    // augment from offline DB
-    if (fs.existsSync(offlineDbPath)) {
-        console.log("Augmenting DB from etymwn_offline.db...");
-        const offlineDb = new Database(offlineDbPath, { readonly: true });
+    console.log("Augmenting DB from etymwn_offline.db...");
+    const stmt = offlineDb.prepare("SELECT * FROM words");
 
-        const stmt = offlineDb.prepare("SELECT * FROM words");
-        for (const entry of stmt.iterate() as Iterable<EtymwnEntry>) {
-            const wordLower = (entry.word || "").toLowerCase();
-            let wordId: number | null = null;
+    for (const entry of stmt.iterate() as Iterable<EtymwnEntry>) {
+        const wordLower = (entry.word || "").toLowerCase();
+        let wordId: number | null = null;
 
-            if (allowedWords.has(wordLower)) {
-                const rawLang = (entry.lang || "english")
-                    .trim()
-                    .toLowerCase()
-                    .replace(/\s+/g, "");
-                const isoLang =
-                    Object.keys(languages).find(
-                        (c) => languages[c].englishName.toLowerCase() === rawLang
-                    ) || "en";
+        if (allowedWords.has(wordLower)) {
+            const rawLang = (entry.lang || "english")
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, "");
+            const isoLang =
+                Object.keys(languages).find(
+                    (c) => languages[c].englishName.toLowerCase() === rawLang
+                ) || "en";
 
-                const info = insertWord.run(
-                    entry.word,
-                    isoLang,
-                    entry.pos,
-                    entry.etymology
-                );
-                wordId = Number(info.lastInsertRowid);
-            }
+            const info = insertWord.run(
+                entry.word,
+                isoLang,
+                entry.pos,
+                entry.etymology
+            );
+            wordId = Number(info.lastInsertRowid);
+        }
 
-            const stages = parseEtymology(entry.etymology);
-            if (wordId !== null) {
-                stages.forEach((stage) => {
-                    insertLinkedWord.run(wordId!, stage.word, stage.lang);
-                });
-            }
+        const stages = parseEtymology(entry.etymology);
+        if (wordId !== null) {
+            stages.forEach((stage) => {
+                insertLinkedWord.run(wordId!, stage.word, stage.lang);
+            });
+        }
 
-            if (entry.cognates?.length) {
-                entry.cognates.forEach((cog) => {
-                    if (wordId !== null) insertCognate.run(wordId, cog, "??");
-                });
-            }
+        if (entry.cognates?.length) {
+            entry.cognates.forEach((cog) => {
+                if (wordId !== null) insertCognate.run(wordId, cog, "??");
+            });
         }
     }
+
 
     // leftover batch
     if (batch.length > 0) {

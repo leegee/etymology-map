@@ -3,11 +3,11 @@ import fs from "fs";
 import Database from "better-sqlite3";
 import { iso6393 } from "iso-639-3";
 import { languages } from "../src/lib/langs"; // adjust path
+import { OFFLINE_DB_PATH } from "../src/config";
 
-const DB_PATH = "./data/etymwn_offline.db";
 const OUTPUT_PATH = "./src/lib/lang-key-mappings.json";
 
-const db = new Database(DB_PATH, { readonly: true });
+const db = new Database(OFFLINE_DB_PATH, { readonly: true });
 
 // Build set of ISO codes used in DB
 const isoCodesInDB = new Set<string>();
