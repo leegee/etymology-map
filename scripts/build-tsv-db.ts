@@ -6,7 +6,7 @@ import fs from "fs";
 import readline from "readline";
 import Database from "better-sqlite3";
 import { iso6393 } from "iso-639-3";
-import { OFFLINE_DB_PATH } from "../src/config";
+import { OFFLINE_DB_PATH } from "./config";
 
 // Paths
 const TSV_PATH = "./data/etymwn.tsv";

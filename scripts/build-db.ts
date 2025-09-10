@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import readline from "readline";
 import Database, { Statement, RunResult } from "better-sqlite3";
-import { DB_FILE_PATH, OFFLINE_DB_PATH } from "../src/config";
+import { DB_FILE_PATH, OFFLINE_DB_PATH } from "./config";
 import { languages } from "../src/lib/langs";
 
 const google10000path = path.resolve("./data/google-10000-english.txt");
