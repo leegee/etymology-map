@@ -16,9 +16,10 @@ Uses `sql.js` to host a database of [Google Top 10,000 Words](https://raw.github
 
     bun dev
 
-    bun build
-
-    bun deploy
+    bun run build
+    bun preview 
+    
+    bun run deploy
 ```
 
 [![Screenshot](./README.png)](https://leegee.github.io/etymology-map/)
