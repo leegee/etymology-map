@@ -6,6 +6,7 @@ import { DB_FILE_PATH, OFFLINE_DB_PATH } from "./config";
 import { languages } from "../src/lib/langs";
 
 const google10000path = path.resolve("./data/google-10000-english.txt");
+const targetPOS: string[] = ["noun", "verb"]
 
 if (fs.existsSync(DB_FILE_PATH)) fs.unlinkSync(DB_FILE_PATH);
 const db = new Database(DB_FILE_PATH);
@@ -48,8 +49,43 @@ const allowedWords = new Set(
         .filter(Boolean)
 );
 
-// restrict by part of speech
-const targetPOS: string[] = []; // e.g. ["noun", "verb"]
+
+
+db.pragma("foreign_keys = ON");
+db.exec(`
+CREATE TABLE words (
+  id INTEGER PRIMARY KEY,
+  word TEXT NOT NULL,
+  lang TEXT NOT NULL,
+  pos TEXT,
+  etymology TEXT
+);
+CREATE TABLE word_links (
+  id INTEGER PRIMARY KEY,
+  word_id INTEGER NOT NULL REFERENCES words(id) ON DELETE CASCADE,
+  linked_word TEXT NOT NULL,
+  lang TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS cognates (
+  id INTEGER PRIMARY KEY,
+  word_id INTEGER NOT NULL REFERENCES words(id) ON DELETE CASCADE,
+  cognate TEXT NOT NULL,
+  lang TEXT NOT NULL
+);
+`);
+
+const insertWord: Statement = db.prepare(
+    `INSERT INTO words (word, lang, pos, etymology) VALUES (?, ?, ?, ?)`
+);
+const insertLinkedWord: Statement = db.prepare(
+    `INSERT INTO word_links (word_id, linked_word, lang) VALUES (?, ?, ?)`
+);
+const insertCognate: Statement = db.prepare(
+    `INSERT INTO cognates (word_id, cognate, lang) VALUES (?, ?, ?)`
+);
+
+const usedLangs = new Map<string, { words: number; wordLinks: number }>();
+
 
 function safeValue(val: unknown): string | null {
     if (val === undefined || val === null) return null;
@@ -99,40 +135,6 @@ function parseEtymology(etymologyText?: string): Stage[] {
 
     return stages;
 }
-
-db.exec(`
-CREATE TABLE words (
-  id INTEGER PRIMARY KEY,
-  word TEXT NOT NULL,
-  lang TEXT NOT NULL,
-  pos TEXT,
-  etymology TEXT
-);
-CREATE TABLE word_links (
-  id INTEGER PRIMARY KEY,
-  word_id INTEGER NOT NULL REFERENCES words(id),
-  linked_word TEXT NOT NULL,
-  lang TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS cognates (
-  id INTEGER PRIMARY KEY,
-  word_id INTEGER NOT NULL REFERENCES words(id),
-  cognate TEXT NOT NULL,
-  lang TEXT NOT NULL
-);
-`);
-
-const insertWord: Statement = db.prepare(
-    `INSERT INTO words (word, lang, pos, etymology) VALUES (?, ?, ?, ?)`
-);
-const insertLinkedWord: Statement = db.prepare(
-    `INSERT INTO word_links (word_id, linked_word, lang) VALUES (?, ?, ?)`
-);
-const insertCognate: Statement = db.prepare(
-    `INSERT INTO cognates (word_id, cognate, lang) VALUES (?, ?, ?)`
-);
-
-const usedLangs = new Map<string, { words: number; wordLinks: number }>();
 
 const insertBatch = db.transaction((entries: KaikkiEntry[]): InsertBatchResult => {
     let wordsInserted = 0;
@@ -203,6 +205,113 @@ const insertBatch = db.transaction((entries: KaikkiEntry[]): InsertBatchResult =
     return { wordsInserted, wordLinksInserted, cognatesInserted };
 });
 
+
+function cleanupVerbs(db: InstanceType<typeof Database>) {
+    // delete links and cognates for verbs that will be removed
+    db.prepare(`
+        DELETE FROM word_links
+        WHERE word_id IN (
+            SELECT id FROM words
+            WHERE pos = 'verb'
+              AND word IN (SELECT word FROM words WHERE pos = 'noun')
+        )
+    `).run();
+
+    db.prepare(`
+        DELETE FROM cognates
+        WHERE word_id IN (
+            SELECT id FROM words
+            WHERE pos = 'verb'
+              AND word IN (SELECT word FROM words WHERE pos = 'noun')
+        )
+    `).run();
+
+    // now safe to remove the verbs
+    db.prepare(`
+        DELETE FROM words
+        WHERE pos = 'verb'
+          AND word IN (SELECT word FROM words WHERE pos = 'noun')
+    `).run();
+}
+
+
+function augmentFromOfflineDb(offlineDb: InstanceType<typeof Database>) {
+    console.log("Augmenting DB from etymwn_offline.db...");
+
+    const stmt = offlineDb.prepare("SELECT * FROM words");
+    for (const entry of stmt.iterate() as Iterable<EtymwnEntry>) {
+        const wordLower = (entry.word || "").toLowerCase();
+        let wordId: number | null = null;
+
+        if (allowedWords.has(wordLower)) {
+            const rawLang = (entry.lang || "english")
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, "");
+            const isoLang =
+                Object.keys(languages).find(
+                    (c) => languages[c].englishName.toLowerCase() === rawLang
+                ) || "en";
+
+            const info = insertWord.run(
+                entry.word,
+                isoLang,
+                entry.pos,
+                entry.etymology
+            );
+            wordId = Number(info.lastInsertRowid);
+        }
+
+        const stages = parseEtymology(entry.etymology);
+        if (wordId !== null) {
+            stages.forEach((stage) => {
+                insertLinkedWord.run(wordId!, stage.word, stage.lang);
+            });
+        }
+
+        if (entry.cognates?.length) {
+            entry.cognates.forEach((cog) => {
+                if (wordId !== null) insertCognate.run(wordId, cog, "??");
+            });
+        }
+    }
+}
+
+
+function postProcessWords(db: InstanceType<typeof Database>) {
+    console.log("Post-processing words table...");
+
+    // 1️⃣ Remove rows with NULL etymology
+    const delNullEty = db.prepare(`
+        DELETE FROM words
+        WHERE etymology IS NULL
+    `);
+    const resNull = delNullEty.run();
+    console.log(`Deleted ${resNull.changes} words with NULL etymology.`);
+
+    // 2️⃣ Remove duplicates: keep the longest word for each duplicate 'word'
+    // We use a CTE to identify the ids to keep, then delete the rest
+    const delDuplicates = db.prepare(`
+        WITH ranked AS (
+            SELECT
+                id,
+                word,
+                ROW_NUMBER() OVER (
+                    PARTITION BY LOWER(word)
+                    ORDER BY LENGTH(word) DESC, id ASC
+                ) AS rn
+            FROM words
+        )
+        DELETE FROM words
+        WHERE id IN (
+            SELECT id FROM ranked WHERE rn > 1
+        )
+    `);
+    const resDup = delDuplicates.run();
+    console.log(`Deleted ${resDup.changes} duplicate words.`);
+}
+
+
 async function main(): Promise<void> {
     const jsonlReadline = readline.createInterface({
         input: fs.createReadStream("./data/kaikki.org-dictionary-English.jsonl"),
@@ -240,47 +349,6 @@ async function main(): Promise<void> {
         }
     }
 
-    console.log("Augmenting DB from etymwn_offline.db...");
-    const stmt = offlineDb.prepare("SELECT * FROM words");
-
-    for (const entry of stmt.iterate() as Iterable<EtymwnEntry>) {
-        const wordLower = (entry.word || "").toLowerCase();
-        let wordId: number | null = null;
-
-        if (allowedWords.has(wordLower)) {
-            const rawLang = (entry.lang || "english")
-                .trim()
-                .toLowerCase()
-                .replace(/\s+/g, "");
-            const isoLang =
-                Object.keys(languages).find(
-                    (c) => languages[c].englishName.toLowerCase() === rawLang
-                ) || "en";
-
-            const info = insertWord.run(
-                entry.word,
-                isoLang,
-                entry.pos,
-                entry.etymology
-            );
-            wordId = Number(info.lastInsertRowid);
-        }
-
-        const stages = parseEtymology(entry.etymology);
-        if (wordId !== null) {
-            stages.forEach((stage) => {
-                insertLinkedWord.run(wordId!, stage.word, stage.lang);
-            });
-        }
-
-        if (entry.cognates?.length) {
-            entry.cognates.forEach((cog) => {
-                if (wordId !== null) insertCognate.run(wordId, cog, "??");
-            });
-        }
-    }
-
-
     // leftover batch
     if (batch.length > 0) {
         const res = insertBatch(batch);
@@ -290,6 +358,10 @@ async function main(): Promise<void> {
             `Final batch inserted: ${res.wordsInserted} words, ${res.wordLinksInserted} wordLinks`
         );
     }
+
+    augmentFromOfflineDb(offlineDb);
+    cleanupVerbs(db);
+    postProcessWords(db);
 
     db.prepare(`VACUUM;`).run();
     db.prepare(`PRAGMA optimize;`).run();
@@ -319,5 +391,6 @@ async function main(): Promise<void> {
     console.log(`word_links table count: ${transCount}`);
     console.log(`Cognates table count: ${cognateCount}`);
 }
+
 
 main().catch((err) => console.error("Fatal error:", err));
