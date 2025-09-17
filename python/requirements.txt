@@ -1,5 +1,15 @@
-torch
-transformers
-peft
-datasets
-accelerate
+# Core LLM library
+ollama>=0.1.0
+
+# Progress bars for batch processing
+tqdm>=4.65.0
+
+# JSON and XML handling
+lxml>=4.9.3
+jsonlines>=3.1.0
+
+# Optional: Data handling / filtering
+pandas>=2.1.0
+
+# Optional: Text cleaning and preprocessing
+regex>=2025.9.1
