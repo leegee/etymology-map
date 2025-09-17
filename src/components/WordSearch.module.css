@@ -8,18 +8,22 @@
     left: 0;
     top: 0;
     width: calc(100% - 3em);
-    color: #aaa !important;
+    color: white !important;
+    opacity: 0.5 !important;
     pointer-events: none;
     background: transparent;
     border-color: transparent !important;
     z-index: 1;
+    font-size: 200% !important
 }
 
 .real-input {
     position: relative !important;
     background: transparent;
     color: white !important;
+    opacity: 1 !important;
     z-index: 2;
+    font-size: 200% !important
 }
 
 .no-suggestion {
